@@ -1,0 +1,51 @@
+# Python cache files
+__pycache__/
+*.py[cod]
+
+# Virtual environment
+venv/
+env/
+ENV/
+.venv/
+
+# Flask instance folder
+instance/
+
+# Python egg files
+*.egg
+*.egg-info/
+.eggs/
+dist/
+build/
+
+# Local configuration files
+*.local
+
+# Log files
+*.log
+
+# Database files
+*.sqlite3
+
+# Coverage reports
+htmlcov/
+*.cover
+.coverage
+
+# Jupyter Notebook checkpoints
+.ipynb_checkpoints
+
+# IDE/Editor specific files
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.swp
+*.swo
+*.DS_Store
+
+# Miscellaneous
+*.db
+*.sqlite
