@@ -1,0 +1,29 @@
+/* Base styles */
+body {
+    transition: background-color 0.3s, color 0.3s;
+  }
+  
+  /* Light mode styles */
+  body.light-mode {
+    background-color: #ffffff;
+  }
+  
+  /* Dark mode styles */
+  body.dark-mode {
+    background-color: #282727;
+    color: #ffffff;
+  }
+  /* Additional styles for elements */
+  .switch-button {
+    transition: background-color 0.3s, color 0.3s;
+  }
+  
+  .switch-button.light-mode {
+    background-color: #007bff;
+    color: #ffffff;
+  }
+  
+  .switch-button.dark-mode {
+    background-color: #444;
+    color: #ffffff;
+  }

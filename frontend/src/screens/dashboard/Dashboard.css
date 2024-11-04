@@ -1,0 +1,39 @@
+.dashboard-card1{
+    background-color: white;
+    width: 24%;
+    border-radius: 5px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    border: 1px solid rgb(234, 234, 234);
+    padding: 10px;
+}
+.bi-people,.bi-car-front, .bi-person , .bi-truck-front{
+    background: linear-gradient(to top , #1d1d1d, #4f4f58) ;
+    color: white;
+    font-size: large;
+    padding: 10px 15px 10px 15px;
+    border-radius: 5px;
+    border: none;
+}
+
+.bi-person{
+    background: linear-gradient(15deg , #01515a 20%,#027b89 50% , #43e0e5 100%) ;
+}
+.bi-car-front{
+    background: linear-gradient(15deg , #677201 20%,#899802 50%, #eae43f 100%) ;
+}
+.bi-people{
+    background: linear-gradient(15deg , #600303 20%, #8f0505 50%, #e12a2a 100%) ;
+}
+.bi-truck-front{
+    background: linear-gradient(15deg , #5e0758 20%, #900b87 50%, #ff33ff 100%) ;
+}
+.graph-container{
+    background-color: white;
+    color: black;
+    width: 60%;
+    margin-top: 10px;
+    border-radius: 5px;
+    padding: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    border: 1px solid rgb(234, 234, 234);
+}

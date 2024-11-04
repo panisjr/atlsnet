@@ -1,0 +1,143 @@
+@import url("https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100..900;1,100..900&display=swap");
+
+* {
+  font-family: "Montserrat", sans-serif;
+}
+.signIn-logo {
+  width: 55px;
+  height: 55px;
+  background-image: url("logo.png");
+  background-position: center;
+  background-size: contain;
+  background-repeat: no-repeat;
+  /* margin:  ; top right bottom left */
+}
+.warningLogo {
+  width: 55px;
+  height: 55px;
+  background-image: url("alert.png");
+  background-position: center;
+  background-size: contain;
+  background-repeat: no-repeat;
+  /* margin:  ; top right bottom left */
+}
+.signIn-container {
+  margin: auto;
+  border-radius: 10px;
+  width: 28%;
+  border: none;
+  background-color: rgb(255, 255, 255);
+  backdrop-filter: blur(10px);
+}
+.signIn-button {
+  width: 100%;
+  padding: 7px;
+  border: none;
+  margin-top: 50px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #57af5b;
+  border-radius: 5px;
+}
+.signIn-button:hover {
+  background-color: #52be8a;
+  transition: 0.3s;
+}
+.undraw {
+  background-image: url("/loginbg.jpg");
+  /* background-image: url("3.png"); */
+  background-position: center;
+  background-size: cover;
+  background-repeat: no-repeat;
+}
+.signIn-logo{
+  width: 50px;
+  height: auto;
+}
+.logoContainer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(15deg, #1d1d1d 20%, #3a3a3f 100%, #4f4f58 100%);
+  border-radius: 5px;
+  border: none;
+  margin-top: -50px;
+  height: 140px;
+}
+.cursor-pointer {
+  cursor: pointer;
+}
+.time:hover {
+  color: black !important;
+}
+.navbar {
+  position: fixed;
+  z-index: 1;
+  background-color: rgb(17, 17, 23);
+}
+.toastContainer {
+  position: fixed;
+  top: 20px; /* Adjust as needed */
+  right: 20px; /* Adjust as needed */
+  width: auto;
+}
+
+.toast-wrapper {
+  margin-bottom: 10px; /* Adjust the space between stacked toasts */
+}
+/* Navbar hover animation */
+.navbar-brand {
+  position: relative;
+  text-decoration: none; /* Remove default underline */
+  cursor: pointer;
+}
+
+.navbar-brand::after {
+  content: "";
+  display: block;
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 0;
+  height: 2px; /* Adjust the height of the underline */
+  background-color: white; /* Adjust the color of the underline */
+  transition: width 0.3s ease; /* Adjust the duration and timing function of the animation */
+}
+
+.navbar-brand:hover::after {
+  width: 100%; /* Underline will stretch to the full width on hover */
+}
+.navbar-brand.active::after {
+  width: 100%; /* Underline is always full width for the active item */
+}
+/* and navbar animation */
+
+.confirmBtn {
+  background-color: white;
+  color: #32cd32;
+  border: 1px #32cd32 solid;
+}
+.confirmBtn:hover {
+  background-color: #00ff7f;
+  color: white;
+}
+input[type="time"] {
+  -webkit-appearance: auto; /* For Chrome, Safari */
+  -moz-appearance: auto; /* For Firefox */
+  appearance: auto; /* General rule */
+}
+
+@media screen and (max-width: 876px) {
+  /* Styles for extra small screens (small phones) */
+  .signIn-container {
+    width: 50%;
+  }
+}
+@media screen and (max-width: 576px) {
+  /* Styles for extra small screens (small phones) */
+  .signIn-container {
+    width: 70%;
+  }
+}
