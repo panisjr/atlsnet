@@ -16,28 +16,31 @@ import subprocess
 video_routes = Blueprint("video_routes", __name__)
 
 # Initialize YOLO model
-model = YOLO("yolov9m.pt")
+model = YOLO("best.pt")
 
 # Define the upload folder
 UPLOAD_FOLDER = os.path.join(os.getcwd(), 'static', 'Videos')
 # Configuration for the RTSP stream
-RTSP_URL = "rtsp://c200North:c200North@192.168.153.165:554/stream1"  # Replace with your RTSP URL
+# RTSP_URL = "rtsp://c200North:c200North@192.168.153.165:554/stream1"  # Replace with your RTSP URL
 STREAM_DIR = "stream"
 M3U8_PATH = os.path.join(STREAM_DIR, "stream.m3u8")
 os.makedirs(STREAM_DIR, exist_ok=True)
+
 # Create the upload folder if it doesn't exist
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+os.makedirs('counting_stream', exist_ok=True)
 
-def start_streaming():
+def start_streaming(rtsp_url):
     """Starts the HLS stream and saves a separate AVI file for object counting."""
     timestamp = int(time.time())  # Get the current timestamp
-    output_filename = f"stream_for_counting_{timestamp}.avi"
+    # Ensure the 'counting_stream' folder exists
+    output_filename = os.path.join('counting_stream', f"stream_for_counting_{timestamp}.avi")
     command = [
         "ffmpeg",
         "-fflags",
         "+genpts",
         "-i",
-        RTSP_URL,
+        rtsp_url,
         "-preset",
         "ultrafast",
         "-tune",
@@ -59,26 +62,29 @@ def start_streaming():
 def process_video_segment():
     """Process the saved AVI stream for object counting and send real-time updates."""
     while True:
-        # Get the latest AVI file created for counting
-        avi_files = sorted([f for f in os.listdir('.') if f.startswith('stream_for_counting_') and f.endswith('.avi')])
+        avi_files = sorted([f for f in os.listdir('counting_stream') if f.startswith('stream_for_counting_') and f.endswith('.avi')])
         
         if not avi_files:
             print("No AVI files found for processing.")
-            time.sleep(5)  # Wait before checking again
+            time.sleep(5)
             continue
+         
+        latest_file = avi_files[-1]
+        latest_file_path = f"counting_stream/{latest_file}"
         
-        latest_file = avi_files[-1]  # Get the most recent file
         print(f"Processing file: {latest_file}")
+        print("File exists:", os.path.exists(latest_file_path))
+        
+        # Allow some time for the file to fully save
+        time.sleep(5)
 
-        # Adding a slight delay to ensure the file is ready for reading
-        time.sleep(5)  # Adjust this based on buffering requirements
-
-        video_capture = cv2.VideoCapture(latest_file)
+        video_capture = cv2.VideoCapture(latest_file_path)
         if not video_capture.isOpened():
-            print(f"Error opening {latest_file}.")
-            return
+            print(f"Error opening {latest_file_path}.")
+            continue
 
-        line_points = [(0, 180), (640, 180)]  # Centered line points for a 640x360 frame
+        # Process the video as before
+        line_points = [(0, 180), (640, 180)]
         counter = ObjectCounter(
             names=model.names,
             reg_pts=line_points,
@@ -86,7 +92,7 @@ def process_video_segment():
             draw_tracks=False,
         )
 
-        frame_skip = 2  # Process every 2nd frame
+        frame_skip = 2
         frame_count = 0
 
         while True:
@@ -99,12 +105,10 @@ def process_video_segment():
             if frame_count % frame_skip != 0:
                 continue
 
-            # Resize the frame before processing
             frame = cv2.resize(frame, (640, 360))
             tracks = model.track(frame, persist=True, show=False)
             counter.start_counting(frame, tracks)
 
-            # Emit real-time counts through Socket.IO
             socketio.emit("update_message", {
                 "in_counts": counter.in_counts,
                 "out_counts": counter.out_counts
@@ -121,6 +125,7 @@ def process_video_segment():
             try:
                 db.session.add(new_video)
                 db.session.commit()
+                print(f"Successfully saved counts for {latest_file}")
             except Exception as e:
                 db.session.rollback()
                 print(f"Error saving to database: {e}")
@@ -128,16 +133,17 @@ def process_video_segment():
         video_capture.release()
         cv2.destroyAllWindows()
 
-        # Optionally, delete the processed file or move it to a different directory
-        os.remove(latest_file)
+        # Remove the processed file to free up space or for re-processing
+        os.remove(latest_file_path)
 
 counting_thread = None  # Initialize counting thread
-
+    
 @video_routes.route("/start_counting/<int:camera_id>", methods=["POST"])
 def start_counting(camera_id):
     camera = Camera.query.get(camera_id)
-    if camera and camera.is_active:
+    if camera and camera.status:
         rtsp_url = camera.rtsp_url
+        print("This is the rtsp url start_counting",rtsp_url)
         """Start processing frames from the RTSP stream for object counting."""
         global counting_thread
         if counting_thread is None or not counting_thread.is_alive():
@@ -148,15 +154,17 @@ def start_counting(camera_id):
             return jsonify({"message": "Counting is already in progress."}), 400
     else:
         return jsonify({'message': 'Camera not found or inactive'}), 404
+ 
 @video_routes.route("/start_hls/<int:camera_id>", methods=["POST"])
 def start_hls(camera_id):
     camera = Camera.query.filter_by(id=camera_id).one_or_none()
-    print("Camera name: " , camera.name)
-    print("Camera id:", camera.id)
     if camera and camera.status:
+        print("Camera name: " , camera.name)
+        print("Camera id:", camera.id)
         rtsp_url = camera.rtsp_url
+        print("Camera rtsp url:", rtsp_url)
         """Start the HLS streaming process."""  
-        thread = Thread(target=start_streaming)  # Run HLS in a separate thread
+        thread = Thread(target=start_streaming, args=(rtsp_url,))  # Run HLS in a separate thread
         thread.start()
         return jsonify({'message': 'HLS stream started', 'rtsp_url': rtsp_url}), 200
     else:
@@ -206,15 +214,6 @@ def format_cameras(camera):
         "status": camera.status,
         "created_at": camera.created_at,
     }
-
-@video_routes.route("/get_cameras", methods=["GET"])
-def get_camera():
-    try:
-        cameras = Camera.query.order_by(Camera.id.asc()).all()
-        cameras_url = [format_cameras(camera) for camera in cameras]
-        return jsonify(cameras_url), 200
-    except Exception as e:
-        return jsonify({"error": "Error occurred when getting cameras"}), 500
 
 def format_videos(video):
     return {
@@ -415,3 +414,32 @@ def delete_video(video_id):
         return jsonify({"msg": "Video deleted successfully!"}), 200
     except Exception as e:
         return jsonify({"error": "Error deleting video!"}), 500
+
+@video_routes.route("/get_cameras", methods=["GET"])
+def get_camera():
+    try:
+        cameras = Camera.query.order_by(Camera.id.asc()).all()
+        cameras_url = [format_cameras(camera) for camera in cameras]
+        return jsonify(cameras_url), 200
+    except Exception as e:
+        return jsonify({"error": "Error occurred when getting cameras"}), 500
+
+# DELETE CAMERA
+@video_routes.route('/delete_camera/<int:camera_id>', methods=['DELETE'])
+def delete_camera(camera_id):
+    token = request.headers.get("Authorization")
+    if not token:
+        return jsonify({"error": "Unauthorized! Token is missing!"}), 401
+    try:
+        # Find the camera by ID
+        camera = Camera.query.get(camera_id)
+        if camera is None:
+            return jsonify({"error": "Camera not found!"}), 404
+
+        # Remove the camera record from the database
+        db.session.delete(camera)
+        db.session.commit()
+
+        return jsonify({"message": "Camera deleted successfully!"}), 200
+    except Exception as e:
+        return jsonify({"error": "Error deleting camera!"}), 500

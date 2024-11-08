@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from "react";
 import "./LandingPage.css";
 import { useNavigate } from "react-router-dom";
-
+import AOS from "aos";
+import "aos/dist/aos.css"; // Import AOS styles
 const LandingPage = () => {
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(null);
@@ -10,7 +11,25 @@ const LandingPage = () => {
   useEffect(() => {
     document.title = "ATLS | Welcome ";
   }, []);
+  useEffect(() => {
+    AOS.init({ duration: 1000, easing: "ease-out", once: false });
+  }, []);
+  const [scrolling, setScrolling] = useState(false);
 
+  const handleScroll = () => {
+    if (window.scrollY > 50) {
+      setScrolling(true);
+    } else {
+      setScrolling(false);
+    }
+  };
+
+  useEffect(() => {
+    window.addEventListener("scroll", handleScroll);
+    return () => {
+      window.removeEventListener("scroll", handleScroll);
+    };
+  }, []);
   // To navigate screens
   const navigate = useNavigate();
 
@@ -18,8 +37,8 @@ const LandingPage = () => {
     if (item === "landingPage") {
       navigate("/landingPage");
     }
-    if (item === "/") {
-      navigate("/");
+    if (item === "signIn") {
+      navigate("/signIn");
     }
   };
   return (
@@ -28,23 +47,18 @@ const LandingPage = () => {
         <div className="row vh-100">
           <nav
             id="navScroll"
-            class="navbar navbar-expand-lg navbar-light fixed-top bg-white"
-            tabindex="0"
+            className={`navbar navbar-expand-lg navbar-light fixed-top bg-white transition ${
+              scrolling ? "scrolled" : ""
+            }`}
+            tabIndex="0"
           >
-            <div class="container">
-              <a class="navbar-brand pe-4 fs-4" href="/">
-                <svg
-                  width="32"
-                  height="32"
-                  fill="currentColor"
-                  class="bi bi-layers-half"
-                  viewbox="0 0 16 16"
-                ></svg>
-                <span class="ms-1 fw-bolder">ATLS</span>
+            <div className="container">
+              <a className="navbar-brand pe-4 fs-4" href="/">
+                <img className="logo" src="logo.png" alt="" />
+                <span className="ms-1 fw-bolder">ATLS</span>
               </a>
-
               <button
-                class="navbar-toggler"
+                className="navbar-toggler"
                 type="button"
                 data-bs-toggle="collapse"
                 data-bs-target="#navbarSupportedContent"
@@ -52,158 +66,141 @@ const LandingPage = () => {
                 aria-expanded="false"
                 aria-label="Toggle navigation"
               >
-                <span class="navbar-toggler-icon"></span>
+                <span className="navbar-toggler-icon"></span>
               </button>
-              <div class="collapse navbar-collapse" id="navbarSupportedContent">
-                <ul class="navbar-nav me-auto mb-2 mb-lg-0">
-                  <li class="nav-item">
-                    <a
-                      class="nav-link"
-                      href="#services"
-                      aria-label="Brings you to the frontpage"
-                    >
+              <div
+                className="collapse navbar-collapse"
+                id="navbarSupportedContent"
+              >
+                <ul className="navbar-nav me-auto mb-2 mb-lg-0">
+                  <li className="nav-item">
+                    <a className="nav-link" href="#services">
                       Services
                     </a>
                   </li>
-                  <li class="nav-item">
-                    <a class="nav-link" href="#aboutus">
-                      About us
+                  <li className="nav-item">
+                    <a className="nav-link" href="#aboutus">
+                      About Us
                     </a>
                   </li>
-                  <li class="nav-item">
-                    <a class="nav-link" href="#numbers">
-                      Numbers
-                    </a>
-                  </li>
-                  <li class="nav-item">
-                    <a class="nav-link" href="#gallery">
-                      Gallery
-                    </a>
-                  </li>
-                  <li class="nav-item">
-                    <a class="nav-link" href="#workwithus">
-                      Work with us
+                  <li className="nav-item">
+                    <a className="nav-link" href="#contact">
+                      Contact
                     </a>
                   </li>
                 </ul>
                 <i className="bi bi-person-fill me-2 pb-1 fs-4"></i>
                 <a
-                  class="link-dark pb-1 link-fancy me-2 cursor-pointer"
-                  onClick={(e)=>handleClick(e,"/")}
+                  className="link-dark pb-1 link-fancy me-2 cursor-pointer"
+                  onClick={(e) => handleClick(e, "signIn")}
                 >
-                 Sign In
+                  Sign In
                 </a>
               </div>
             </div>
           </nav>
+
+          {/* Hero Section */}
           <div className="col-12 d-flex align-items-center justify-content-center">
             <div>
-              <div class="w-100 overflow-hidden bg-gray-100" id="top">
-                <div class="container position-relative">
+              <div className="w-100 overflow-hidden bg-gray-100" id="top">
+                <div className="container vh-100 position-relative">
                   <div
-                    class="col-12 col-lg-8 mt-0 h-100 position-absolute top-0 end-0 bg-cover"
+                    className="col-12 col-lg-8 mt-0 h-100 position-absolute top-0 end-0 bg-cover"
                     data-aos="fade-left"
+                    style={{ backgroundImage: "url('./traffic.jpg')" }}
                   ></div>
-                  <div class="row">
-                    <div
-                      class="col-lg-7 py-vh-6 position-relative"
-                      data-aos="fade-right"
-                    >
-                      <h1 class="display-1 fw-bold mt-5">
-                        Enhance traffic flow!
+                  <div className="row vh-100 align-items-center">
+                    <div className="col-lg-7 py-vh-6" data-aos="fade-right">
+                      <h1 className="display-1 fw-bold mt-5">
+                        Enhance T<span className="text-white">raffic</span>{" "}
+                        Flow!
                       </h1>
-                      <p class="lead">
-                        ATLS, to have a smooth flow of traffic using advanced technology and lessen the traffic congestions.
+                      <p className="lead ">
+                        ATLS: For a smooth flow of traffic using adva
+                        <span className="text-white">
+                          nced technology to reduce
+                        </span>{" "}
+                        congestion.
                       </p>
-                    
                     </div>
                   </div>
                 </div>
               </div>
 
-              <div class="py-vh-5 w-100 overflow-hidden" id="services">
-                <div class="container">
-                  <div class="row d-flex justify-content-end">
-                    <div class="col-lg-8" data-aos="fade-down">
-                      <h2 class="display-6">
-                        Okay, there are three really good reasons for us. There
-                        are no more than three, but we think three is a
-                        reasonable good number of good stuff.
+              {/* Services Section */}
+              <div
+                className="py-vh-5 vh-100 d-flex align-items-center  h-100 p-5 overflow-hidden"
+                id="services"
+              >
+                <div className="container">
+                  <div className="row d-flex justify-content-end">
+                    <div className="col-lg-8" data-aos="fade-down">
+                      <h2 className="display-6 fw-semibold mb-5">
+                        Our Services
                       </h2>
                     </div>
                   </div>
-                  <div class="row d-flex align-items-center">
+                  <div className="row d-flex align-items-center">
                     <div
-                      class="col-md-6 col-lg-4"
+                      className="col-md-6 col-lg-4"
                       data-aos="fade-up"
                       data-aos-delay="200"
                     >
-                      <span class="h5 fw-lighter">01.</span>
-                      <h3 class="py-5 border-top border-dark">
-                        We rented this fancy startup office in an old factory
-                        building.
+                      <span className="h5 fw-lighter">01.</span>
+                      <h3 className="py-5 border-top border-dark">
+                        Innovative Traffic Solutions
                       </h3>
                       <p>
-                        Lorem, ipsum dolor sit amet consectetur adipisicing
-                        elit. Minus culpa, voluptatibus ex itaque, sapiente a
-                        consequatur inventore beatae, ipsam debitis omnis
-                        consequuntur iste asperiores. Similique quisquam debitis
-                        corrupti deserunt, dolor.
+                        Advanced technology to streamline urban traffic
+                        management.
                       </p>
-                      <a href="#" class="link-fancy">
-                        Learn more{" "}
+                      <a href="#" className="link-fancy">
+                        Learn more
                       </a>
                     </div>
 
                     <div
-                      class="col-md-6 col-lg-4 py-vh-4 pb-0"
+                      className="col-md-6 col-lg-4 py-vh-4"
                       data-aos="fade-up"
                       data-aos-delay="400"
                     >
-                      <span class="h5 fw-lighter">02.</span>
-                      <h3 class="py-5 border-top border-dark">
-                        We don´t know exactly what we are doing. But thats good
-                        because we can´t break something intentionally.
+                      <span className="h5 fw-lighter">02.</span>
+                      <h3 className="py-5 border-top border-dark">
+                        Data-Driven Insights
                       </h3>
                       <p>
-                        Lorem, ipsum dolor sit adipisicing elit. Minus culpa,
-                        voluptatibus ex itaque, sapiente a consequatur inventore
-                        beatae, ipsam debitis omnis consequuntur iste
-                        asperiores. Similique quisquam debitis corrupti
-                        deserunt, dolor.
+                        Real-time analytics and insights to improve traffic
+                        flow.
                       </p>
-                      <a href="#" class="link-fancy">
-                        Learn more{" "}
+                      <a href="#" className="link-fancy">
+                        Learn more
                       </a>
                     </div>
 
                     <div
-                      class="col-md-6 col-lg-4 py-vh-6 pb-0"
+                      className="col-md-6 col-lg-4 py-vh-6"
                       data-aos="fade-up"
                       data-aos-delay="600"
                     >
-                      <span class="h5 fw-lighter">03.</span>
-                      <h3 class="py-5 border-top border-dark">
-                        There is no real number three reason. So please read
-                        again number one and two.
+                      <span className="h5 fw-lighter">03.</span>
+                      <h3 className="py-5 border-top border-dark">
+                        Seamless User Experience
                       </h3>
                       <p>
-                        Lorem, ipsum dolor sit amet consectetur adipisicing
-                        elit. Minus culpa, voluptatibus ex itaque, sapiente a
-                        consequatur inventore beatae, ipsam debitis omnis
-                        consequuntur iste asperiores. Similique quisquam debitis
-                        corrupti deserunt, dolor.
+                        Empowering users with accessible, easy-to-use
+                        interfaces.
                       </p>
-                      <a href="#" class="link-fancy">
-                        Learn more{" "}
+                      <a href="#" className="link-fancy">
+                        Learn more
                       </a>
                     </div>
                   </div>
                 </div>
               </div>
-
+              {/* About us section */}
               <div
-                class="py-vh-4 bg-gray-100 w-100 overflow-hidden"
+                class="py-vh-4 bg-gray vw-100 vh-100 p-5 overflow-hidden"
                 id="aboutus"
               >
                 <div class="container">
@@ -214,19 +211,25 @@ const LandingPage = () => {
                           <div
                             class="shadow ratio ratio-16x9 rounded bg-cover bp-center align-self-end"
                             data-aos="fade-right"
+                            style={{
+                              backgroundImage: "url('./intersection.png')",
+                            }}
                           ></div>
                         </div>
                         <div class="col-md-5 offset-md-1">
                           <div
                             class="shadow ratio ratio-1x1 rounded bg-cover mt-5 bp-center float-end"
                             data-aos="fade-up"
+                            style={{
+                              backgroundImage: "url('./intersection2.png')",
+                            }}
                           ></div>
                         </div>
-                        <div class="col-md-6">
+                        <div class="col-md-4 offset-md-1">
                           <div
-                            class="col-12 shadow ratio rounded bg-cover mt-5 bp-center"
-                            data-aos="fade-left"
-                          
+                            class="shadow ratio ratio-1x1 rounded bg-cover mt-5 bp-center float-end"
+                            data-aos="fade-up"
+                            style={{ backgroundImage: "url('./people.jpg')" }}
                           ></div>
                         </div>
                       </div>
@@ -237,19 +240,17 @@ const LandingPage = () => {
                         data-aos="fade-left"
                       >
                         We did some interesting stuff in our field of work. For
-                        example we collect a lot of these free photos and use
-                        them on our website.
+                        example amoung of vehicle everyday to analyze the
+                        traffic flow.
                       </h3>
                       <p data-aos="fade-left" data-aos-delay="200">
-                        Donec id elit non mi porta gravida at eget metus. Fusce
-                        dapibus, tellus ac cursus commodo, tortor mauris
-                        condimentum nibh, ut fermentum massa justo sit amet
-                        risus.
+                        With the use of advanced technologies we can be able to
+                        enhance the traffic flow and address traffic congestion.
                       </p>
                       <p>
                         <a
                           href="#"
-                          class="link-fancy link-dark"
+                          class="link-fancy"
                           data-aos="fade-left"
                           data-aos-delay="400"
                         >
@@ -260,122 +261,47 @@ const LandingPage = () => {
                   </div>
                 </div>
               </div>
-
-              <div class="py-vh-5 w-100 overflow-hidden" id="numbers">
-                <div class="container">
-                  <div class="row d-flex justify-content-between align-items-center">
-                    <div class="col-lg-5">
-                      <h3
-                        class="py-5 border-top border-dark"
-                        data-aos="fade-right"
-                      >
+              {/* Contact Section */}
+              <div className="py-vh-5 w-100 overflow-hidden p-5 " id="contact">
+                <div className="container">
+                  <div className="row d-flex justify-content-between align-items-center">
+                    <div className="col-lg-5" data-aos="fade-right">
+                      <h3 className="py-5 border-top border-dark">
                         Our magic numbers
                       </h3>
                     </div>
-                    <div class="col-lg-6">
-                      <div class="row">
-                        <div class="col-12">
-                          <h2 class="display-6 mb-5" data-aos="fade-down">
-                            There are some important numbers for us. They are
-                            just numbers without any meaning, but we just love
-                            them.
-                          </h2>
+                    <div className="col-lg-6">
+                      <div className="row">
+                        <div className="col-12" data-aos="fade-down">
+                          <h2 className="display-6 mb-5">Contact Us</h2>
                         </div>
-                        <div class="col-lg-6" data-aos="fade-up">
-                          <div class="display-1 fw-bold py-4">42%</div>
-                          <p class="text-black-50">
-                            Donec id elit non mi porta gravida at eget metus.
-                            Fusce dapibus, tellus ac cursus commodo, tortor
-                            mauris condimentum nibh, ut fermentum massa justo
-                            sit amet risus. Etiam porta sem malesuada magna
-                            mollis euismod. Donec sed odio dui.
-                          </p>
-                        </div>
-                        <div class="col-lg-6" data-aos="fade-up">
-                          <div class="display-1 fw-bold py-4">+300</div>
-                          <p class="text-black-50">
-                            Donec id elit non mi porta gravida at eget metus.
-                            Fusce dapibus, tellus ac cursus commodo, tortor
-                            mauris condimentum nibh, ut fermentum massa justo
-                            sit amet risus. Etiam porta sem malesuada magna
-                            mollis euismod. Donec sed odio dui.
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <div
-                class="position-relative overflow-hidden w-100 bg-light"
-                id="gallery"
-              >
-                <div class="container-fluid">
-                  <div class="row overflow-scroll">
-                    <div class="col-12">
-                      <div class="row vw-100 px-0 py-vh-5 d-flex align-items-center scrollx">
-                        <div class="col-md-2" data-aos="fade-up">
-                          <img
-                            class="rounded shadow img-fluid"
-                            alt="nice gallery image"
-                            width="512"
-                            height="341"
-                          />
-                        </div>
-
-                        <div
-                          class="col-md-2"
-                          data-aos="fade-up"
-                          data-aos-delay="200"
-                        >
-                          <img
-                            class="img-fluid rounded shadow"
-                            alt="nice gallery image"
-                            width="1164"
-                            height="776"
-                          />
-                        </div>
-
-                        <div
-                          class="col-md-3"
-                          data-aos="fade-up"
-                          data-aos-delay="400"
-                        >
-                          <img
-                            src="img/webp/people2.webp"
-                            class="img-fluid rounded shadow"
-                            alt="nice gallery image"
-                            width="844"
-                            height="1054"
-                          />
-                        </div>
-
-                        <div
-                          class="col-md-3"
-                          data-aos="fade-up"
-                          data-aos-delay="600"
-                        >
-                          <img
-                            class="img-fluid rounded shadow"
-                            alt="nice gallery image"
-                            width="844"
-                            height="562"
-                          />
-                        </div>
-
-                        <div
-                          class="col-md-2"
-                          data-aos="fade-up"
-                          data-aos-delay="800"
-                        >
-                          <img
-                            src="img/webp/people23.webp"
-                            class="rounded shadow img-fluid"
-                            alt="nice gallery image"
-                            width="512"
-                            height="341"
-                          />
+                        <div className="row">
+                          <div className="col-md-6" data-aos="fade-up">
+                            <p className="fs-6 fw-semibold">Email</p>
+                            <p className="text-black-50">
+                              <a
+                                href="#"
+                                class="link-fancy link-dark"
+                                data-aos="fade-left"
+                                data-aos-delay="400"
+                              >
+                               <i className="fs-5 bi bi-envelope-at"></i> atls@gmail.com
+                              </a>
+                            </p>
+                          </div>
+                          <div className="col-md-6" data-aos="fade-up">
+                            <p className="fs-6 fw-semibold">Social</p>
+                            <div className="d-flex">
+                              <a
+                                href="https://web.facebook.com/ramel.panis.1/"
+                                class="link-fancy link-dark"
+                                data-aos="fade-left"
+                                data-aos-delay="400"
+                              >
+                                <p className="text-primary fs-3 me-2 bi bi-facebook"></p>
+                              </a>
+                            </div>
+                          </div>
                         </div>
                       </div>
                     </div>
@@ -383,165 +309,50 @@ const LandingPage = () => {
                 </div>
               </div>
 
-              <div class="container py-vh-4 w-100 overflow-hidden">
-                <div class="row d-flex justify-content-center align-items-center">
-                  <div class="col-lg-5">
-                    <h3
-                      class="py-5 border-top border-dark"
-                      data-aos="fade-right"
-                    >
-                      What our clients say
-                    </h3>
-                  </div>
-                  <div class="col-md-7" data-aos="fade-left">
-                    <blockquote>
-                      <div class="fs-4 my-3 fw-light pt-4 border-bottom pb-3">
-                        “I´am the CEO of this company. So maybe you think "he
-                        will tell us something super awesome about it only". But
-                        no. Its a really strange place to work with creepy
-                        people all around. They do some computer stuff I don´t
-                        understand. But I wear expensive Glasses and a Patagonia
-                        Hoodie. So I´am fine with it.”
-                      </div>
-                      <img
-                        width="64"
-                        height="64"
-                        class="img-fluid rounded-circle me-3"
-                        alt=""
-                        data-aos="fade"
-                      />
-                      <span>
-                        <span class="fw-bold">John Doe,</span> CEO of Stride
-                        Ltd.
-                      </span>
-                    </blockquote>
-                  </div>
-                </div>
-              </div>
-
-              <div
-                class="py-vh-6 bg-gray-900 text-light w-100 overflow-hidden"
-                id="workwithus"
-              >
-                <div class="container">
-                  <div class="row d-flex justify-content-center">
-                    <div class="row d-flex justify-content-center text-center">
-                      <div class="col-lg-8 text-center" data-aos="fade">
-                        <p class="text-secondary lead">
-                          Let´s start a project together!
-                        </p>
-                        <h2 class="display-6 mb-5">
-                          Hell no! This button is linked to a none working
-                          contact form. A none working form without any user
-                          feedback. So you might think you done something wrong.
-                          But in reality we just don´t want to start anything
-                          with you or anyone else.
-                        </h2>
-                      </div>
-                      <div class="col-12">
-                        <a
-                          href="#"
-                          class="btn btn-warning btn-xl shadow me-3 mt-4"
-                          data-aos="fade-down"
-                        >
-                          Get in contact
-                        </a>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <div class="bg-light w-100 overflow-hidden" id="testimonials">
-                <div class="container py-vh-6">
-                  <div class="row d-flex justify-content-center">
-                    <div class="col-12 col-lg-10 col-xl-8 text-center">
-                      <h2 class="display-6">
-                        Loved by people all around the globe
-                      </h2>
-                      <p class="lead">
-                        Our spaces and offices are soooooo lovely, no one would
-                        give us a negative rating! And look at these trustworthy
-                        avatar pictures! Trust us!
-                      </p>
-                    </div>
-                    
-                  </div>
-                </div>
-              </div>
-
-              <div class="small py-vh-3 w-100 overflow-hidden">
-                <div class="container">
-                  <div class="row">
+              {/* Footer Section */}
+              <div className="small py-vh-3 w-100 p-5 bg-secondary text-white">
+                <div className="container">
+                  <div className="row">
                     <div
-                      class="col-md-6 col-lg-4 border-end"
+                      className="col-md-6 col-lg-4 border-end"
                       data-aos="fade-up"
                     >
-                      <div class="d-flex">
-                        <div class="col-md-3 flex-fill pt-3 pe-3 pe-md-0">
-                         
-                        </div>
-                        <div class="col-md-9 flex-fill">
-                          <h3 class="h5 my-2">Delivery Service</h3>
-                          <p>
-                            If we had any physical goods we would deliver them
-                            to your door steps. Of course in time and to the
-                            right adress. But we have no products...
-                          </p>
-                        </div>
-                      </div>
+                      <h3 className="h5 my-2">Services</h3>
+                      <p>
+                        Efficient service for all necessary traffic issues and concern.
+                      </p>
                     </div>
                     <div
-                      class="col-md-6 col-lg-4 border-end"
+                      className="col-md-6 col-lg-4 border-end"
                       data-aos="fade-up"
                       data-aos-delay="200"
                     >
-                      <div class="d-flex">
-                        <div class="col-md-3 flex-fill pt-3 pt-3 pe-3 pe-md-0">
-                         
-                        </div>
-                        <div class="col-md-9 flex-fill">
-                          <h3 class="h5 my-2">Independently Checked</h3>
-                          <p>
-                            Maybe we would do something to ensure that you get
-                            what you ordered. But you can´t order anything here,
-                            so we can give you a 100% gurantee that anything
-                            would be great!
-                          </p>
-                        </div>
-                      </div>
+                      <h3 className="h5 my-2">Verified Systems</h3>
+                      <p>
+                        Our solutions are tested and certified to ensure
+                        reliability.
+                      </p>
                     </div>
-
                     <div
-                      class="col-md-6 col-lg-4"
+                      className="col-md-6 col-lg-4"
                       data-aos="fade-up"
                       data-aos-delay="400"
                     >
-                      <div class="d-flex">
-                        <div class="col-md-3 flex-fill pt-3 pt-3 pe-3 pe-md-0">
-                         
-                        </div>
-                        <div class="col-md-9 flex-fill">
-                          <h3 class="h5 my-2">Online Support</h3>
-                          <p>
-                            Okay, we have this crazy online support form. Fill
-                            it out and the content will be mailed to you as PDF.
-                            Print it out. Than send it via Fax to our super
-                            duper hidden Fax number.
-                          </p>
-                        </div>
-                      </div>
+                      <h3 className="h5 my-2">Online Support</h3>
+                      <p>
+                        24/7 support available to assist with any inquiries or
+                        issues.
+                      </p>
                     </div>
                   </div>
                 </div>
               </div>
 
               <div
-                class="container py-vh-3 border-top"
+                className="container py-vh-3 border-top"
                 data-aos="fade"
                 data-aos-delay="200"
-              >
-              </div>
+              ></div>
             </div>
           </div>
         </div>

@@ -281,17 +281,16 @@ const AccountManagement = () => {
       <div className="container-fluid vw-100">
         <div className="row">
           <div className="col-2 col-md-2">
-          <SideNavbar active={active} handleClick={handleClick}/>
-
+            <SideNavbar active={active} handleClick={handleClick} />
           </div>
           <div className="col-10 col-md-10 vh-100 p-4">
             <div className="d-flex align-items-center justify-content-start mb-3">
-              <h6 className="ms-3 me-2">
+              <h6 className="p-3">
                 <span className="text-secondary">Pages</span> / Account
                 Management
               </h6>
               <button
-                className="btn btn-dark"
+                className="btn btn-secondary"
                 data-bs-toggle="modal"
                 data-bs-target="#createAccountStaticBackdrop"
               >
@@ -521,25 +520,15 @@ const AccountManagement = () => {
               aria-labelledby="staticBackdropLabel"
               aria-hidden="true"
             >
-              <div className="modal-dialog">
+              <div className="modal-dialog" style={{ border: "none" }}>
                 <div className="modal-content">
-                  <div className="modal-header">
-                    <div className="d-flex align-items-center justify-content-center">
-                      <div className="logo"></div>
-                      <h4 className="mt-3">
-                        <strong>ATLS</strong>
-                      </h4>
+                  <div className="modal-header align-items-center justify-content-start">
+                    <div className="align-items-center justify-content-center">
+                      <h5 className="fw-semibold mt-3">Create account</h5>
                     </div>
-
-                    <button
-                      type="button"
-                      className="btn-close"
-                      data-bs-dismiss="modal"
-                      aria-label="Close"
-                    ></button>
                   </div>
                   <div className="modal-body">
-                    <h6 id="staticBackdropLabel">Create an Account</h6>
+                    <h6 id="staticBackdropLabel">Fill in the details</h6>
                     <form onSubmit={handleRegister}>
                       <div className="input-group mb-3">
                         <input
@@ -625,7 +614,7 @@ const AccountManagement = () => {
                           required
                         />
                       </div>
-                      <div className="form-group">
+                      <div className="form-group mb-3">
                         <label htmlFor="role">Role</label>
                         <select
                           id="role"
@@ -649,7 +638,7 @@ const AccountManagement = () => {
                         </button>
                         <button type="submit" className="btn btn-success">
                           <i className="bi bi-check2 me-2"></i>
-                          Submit
+                          Create
                         </button>
                       </div>
                     </form>
@@ -657,6 +646,7 @@ const AccountManagement = () => {
                 </div>
               </div>
             </div>
+
             {/* Delete Confirmation Modal */}
             <div
               className="modal fade"
@@ -669,29 +659,23 @@ const AccountManagement = () => {
             >
               <div className="modal-dialog">
                 <div className="modal-content">
-                  <div className="modal-header">
+                  <div className="modal-header bg-danger border-bottom-0 text-white align-items-center justify-content-center">
                     <div className="d-flex align-items-center justify-content-center">
-                      <div className="logo"></div>
-                      <h4 className="mt-3">
-                        <strong>ATLS</strong>
-                      </h4>
+                      <h4 className="mt-3 fw-medium">Confirmation</h4>
                     </div>
-                    <button
-                      type="button"
-                      className="btn-close"
-                      data-bs-dismiss="modal"
-                      aria-label="Close"
-                    ></button>
                   </div>
                   {selected ? (
                     <div className="modal-body">
-                      <h4
-                        className="modal-title text-danger text-center m-3"
-                        id="staticBackdropLabel"
-                      >
-                        Confirmation
-                      </h4>
-                      <p>Are you sure you want to delete this account?</p>
+                      <div className="text-center">
+                        <p
+                          className="bi bi-exclamation-circle text-danger"
+                          style={{ fontSize: "3rem" }}
+                        ></p>
+                        <p className="fw-medium">
+                          Are you sure you want to delete this account?
+                        </p>
+                      </div>
+
                       <strong className="mt-2">Account Information</strong>
                       <p>
                         <strong>ID:</strong> {selected.user_id}
@@ -721,6 +705,7 @@ const AccountManagement = () => {
                           className="btn btn-secondary"
                           data-bs-dismiss="modal"
                         >
+                          <i className="bi bi-x me-2"></i>
                           Cancel
                         </button>
                         <button
@@ -728,7 +713,8 @@ const AccountManagement = () => {
                           className="btn btn-danger"
                           data-bs-dismiss="modal"
                         >
-                          Yes
+                          <i className="bi bi-check me-2"></i>
+                          Yes, Delete
                         </button>
                       </div>
                     </div>
@@ -750,52 +736,61 @@ const AccountManagement = () => {
             >
               <div className="modal-dialog">
                 <div className="modal-content">
-                  <div className="modal-header">
-                    <div className="d-flex align-items-center justify-content-center">
-                      <div className="logo"></div>
-                      <h4 className="mt-3">
-                        <strong>ATLS</strong>
+                  <div
+                    className={`modal-header border-bottom-0 text-white align-items-center justify-content-center ${selected ? (
+                      selected.status == "Active" ? "bg-orange" :"bg-success"
+                    ):(<i>No user</i>)}`}                     
+                    
+                  >
+                    <div className=" align-items-center justify-content-center">
+                        {selected ? (
+                      <h4 className="fw-medium mt-2">
+                        {selected.status == "Active"
+                          ? "Deactivate Confirmation"
+                          : "Activate Confirmation"}
                       </h4>
+                        ):(
+                          <i>No user</i>
+                        )}
                     </div>
-                    <button
-                      type="button"
-                      className="btn-close"
-                      data-bs-dismiss="modal"
-                      aria-label="Close"
-                    ></button>
                   </div>
                   {selected ? (
                     <div className="modal-body">
-                      <h4
-                        className="modal-title text-danger text-center m-3"
-                        id="staticBackdropLabel"
-                      >
-                        Confirmation
-                      </h4>
-                      {selected.status == "Active"
-                        ? "Are you sure you want to deactivate this account?"
-                        : "Are you sure you want to activate this accout?"}
-                      <h6 className="mt-2">
-                        <strong>Account Information</strong>
-                      </h6>
+                      <div className="text-center">
+                        <p
+                          className={`bi bi-exclamation-circle ${selected.status == "Active" ?"font-orange":"text-success"}`}
+                          style={{ fontSize: "3rem" }}
+                        ></p>
+                        <p className="fw-semibold">
+                          {selected.status == "Active"
+                            ? "Are you sure you want to deactivate this account?"
+                            : "Are you sure you want to activate this account?"}
+                        </p>
+                      </div>
+                      <h6 className="mt-2 fw-meduim">Account Information</h6>
                       <p>
-                        <strong>Name:</strong> {selected.firstname}{" "}
-                        {selected.middlename} {selected.lastname}
+                        <span className="fw-medium">Name:</span>{" "}
+                        {selected.firstname} {selected.middlename}{" "}
+                        {selected.lastname}
                       </p>
                       <p>
-                        <strong>Email:</strong> {selected.email}
+                        <span className="fw-medium">Email:</span>{" "}
+                        {selected.email}
                       </p>
                       <p>
-                        <strong>Contact:</strong> {selected.contact}
+                        <span className="fw-medium">Contact:</span>{" "}
+                        {selected.contact}
                       </p>
                       <p>
-                        <strong>Address:</strong> {selected.address}
+                        <span className="fw-medium">Address:</span>{" "}
+                        {selected.address}
                       </p>
                       <p>
-                        <strong>Role:</strong> {selected.role}
+                        <span className="fw-medium">Role:</span> {selected.role}
                       </p>
                       <p>
-                        <strong>Status:</strong> {selected.status}
+                        <span className="fw-medium">Status:</span>{" "}
+                        {selected.status}
                       </p>
                       <div className="modal-footer">
                         <button
@@ -803,23 +798,26 @@ const AccountManagement = () => {
                           className="btn btn-secondary"
                           data-bs-dismiss="modal"
                         >
+                          <i className="bi bi-x me-2"></i>
                           Cancel
                         </button>
                         {selected.status == "Active" ? (
                           <button
                             onClick={() => handleDeactivate(selected.id)}
-                            className="btn btn-warning"
+                            className={`btn ${selected.status == "Active" ?"btn-orange":"btn-success"}`}
                             data-bs-dismiss="modal"
                           >
-                            Yes
+                            <i className="bi bi-check me-2"></i>
+                            Yes, Deactivate
                           </button>
                         ) : (
                           <button
                             onClick={() => handleActivate(selected.id)}
-                            className="btn btn-warning"
+                            className={`btn ${selected.status == "Active" ?"btn-orange":"btn-success"}`}
                             data-bs-dismiss="modal"
                           >
-                            Yes
+                            <i className="bi bi-check me-2"></i>
+                            Yes, Activate
                           </button>
                         )}
                       </div>

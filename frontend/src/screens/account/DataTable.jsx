@@ -1,13 +1,19 @@
 import React from "react";
 import { useTable, useSortBy, usePagination } from "react-table";
-import "../css/DataTable.css"; // Ensure this file is imported
+import "./DataTable.css"; // Ensure this file is imported
 
-const DataTable = ({ users = [], onEdit, onDelete, onActivate, onDeactivate }) => {
+const DataTable = ({
+  users = [],
+  onEdit,
+  onDelete,
+  onActivate,
+  onDeactivate,
+}) => {
   const columns = React.useMemo(
     () => [
       {
         Header: "No.",
-        Cell: ({ row }) => row.index + 1, 
+        Cell: ({ row }) => row.index + 1,
       },
       {
         Header: "ID",
@@ -38,68 +44,78 @@ const DataTable = ({ users = [], onEdit, onDelete, onActivate, onDeactivate }) =
       {
         Header: "Status",
         accessor: "status",
-        Cell: ({ value }) => (
-          value === "Active" ? 
-          <i className="bi bi-check-circle-fill" style={{ color: 'green' }}></i> 
-          : 
-          <i className="bi bi-x-circle-fill" style={{ color: 'red' }}></i>
-        ),
-      },      
+        Cell: ({ value }) =>
+          value === "Active" ? (
+            <i
+              className="bi bi-check-circle-fill"
+              style={{ color: "green" }}
+            ></i>
+          ) : (
+            <i className="bi bi-x-circle-fill" style={{ color: "red" }}></i>
+          ),
+      },
       {
-        Header: "Actions",
+        Header: "",
         accessor: "actions",
         disableSortBy: true, // Disable sorting for actions column
         Cell: ({ row }) => (
           <div className="dropdown text-center">
-            <button className="btn btn-secondary bi bi-three-dots" type="button" data-bs-toggle="dropdown" aria-expanded="false">
-            </button>
-            <ul className="dropdown-menu p-3">
-            {row.original.status === "Deactivated" ? (
-              <button
-                data-bs-toggle="modal"
-                data-bs-target="#statusBackDrop"
-                onClick={() => {
-                  onActivate(row.original);
-                }}
-                className="btn btn-success mb-2"
-              >
-                Activate
-              </button>
-            ) : (
-              <button
-                data-bs-toggle="modal"
-                data-bs-target="#statusBackDrop"
-                onClick={() => {
-                  onDeactivate(row.original);
-                }}
-                className="btn btn-warning mb-2"
-              >
-                Deactivate
-              </button>
-            )}
-            <button
-              className="btn btn-danger me-2"
-              data-bs-toggle="modal"
-              data-bs-target="#deleteBackdrop"
-              onClick={() => onDelete(row.original)}
-            >
-            <i class="bi bi-trash"></i>
-            </button>
-            <button
-              className="btn btn-success mt-2 "
-              data-bs-toggle="modal"
-              data-bs-target="#editBackDrop"
-              onClick={() => onEdit(row.original)}
-            >
-                          <i class="bi bi-pencil"></i>
+            <p
+              className="fs-5 bi bi-three-dots-vertical"
+              type="button"
+              data-bs-toggle="dropdown"
+              aria-expanded="false"
+            ></p>
+            <ul className="dropdown-menu ps-3">
+              {row.original.status === "Deactivated" ? (
+                <button
+                  data-bs-toggle="modal"
+                  data-bs-target="#statusBackDrop"
+                  onClick={() => {
+                    onActivate(row.original);
+                  }}
+                  className="btn btn-success mb-2"
+                >
+                  Activate
+                </button>
+              ) : (
+                <button
+                  data-bs-toggle="modal"
+                  data-bs-target="#statusBackDrop"
+                  onClick={() => {
+                    onDeactivate(row.original);
+                  }}
+                  className="btn btn-orange mb-2"
+                >
+                  Deactivate
+                </button>
+              )}
 
-            </button>
+              <button
+                className="btn btn-danger mb-2"
+                data-bs-toggle="modal"
+                data-bs-target="#deleteBackdrop"
+                onClick={() => onDelete(row.original)}
+              >
+                <i className="bi bi-trash me-2"></i>
+                Delete
+              </button>
+
+              <button
+                className="btn btn-warning"
+                data-bs-toggle="modal"
+                data-bs-target="#editBackDrop"
+                onClick={() => onEdit(row.original)}
+              >
+                <i className="bi bi-pencil-square me-2"></i>
+                Edit
+              </button>
             </ul>
           </div>
         ),
       },
     ],
-    [onDelete, onEdit,onDeactivate,onActivate]
+    [onDelete, onEdit, onDeactivate, onActivate]
   );
 
   const {
@@ -161,24 +177,33 @@ const DataTable = ({ users = [], onEdit, onDelete, onActivate, onDeactivate }) =
       </div>
 
       <div className="pagination justify-content-end p-2">
-        <button onClick={() => gotoPage(0)} disabled={!canPreviousPage}>
-          <i className="bi bi-chevron-double-left"></i>
-        </button>
-        <button onClick={() => previousPage()} disabled={!canPreviousPage}>
-          <i className="bi bi-chevron-left"></i>
-        </button>
-        <button onClick={() => nextPage()} disabled={!canNextPage}>
-          <i className="bi bi-chevron-right"></i>
-        </button>
-        <button onClick={() => gotoPage(pageCount - 1)} disabled={!canNextPage}>
-          <i className="bi bi-chevron-double-right"></i>
-        </button>
-        <span>
-          Page{" "}
-          <strong>
+        <p
+          className="btn btn-secondary fs-6 bi bi-chevron-double-left me-2"
+          onClick={() => gotoPage(0)}
+          disabled={!canPreviousPage}
+        ></p>
+        <p
+          className="btn btn-secondary fs-6 bi bi-chevron-left me-2"
+          onClick={() => previousPage()}
+          disabled={!canPreviousPage}
+        ></p>
+        <span className=" me-2 mt-2">
+          Page
+          <strong className="ms-2">
             {pageIndex + 1} of {pageCount}
-          </strong>{" "}
+          </strong>
         </span>
+        <p
+          className="btn btn-secondary fs-6 bi bi-chevron-right me-2"
+          onClick={() => nextPage()}
+          disabled={!canNextPage}
+        ></p>
+        <p
+          className="btn btn-secondary fs-6 bi bi-chevron-double-right"
+          onClick={() => gotoPage(pageCount - 1)}
+          disabled={!canNextPage}
+        ></p>
+        
         {/* <select
           value={pageSize}
           onChange={(e) => setPageSize(Number(e.target.value))}

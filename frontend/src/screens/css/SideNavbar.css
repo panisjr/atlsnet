@@ -115,3 +115,81 @@ i {
   margin-bottom: 1rem; /* Adds space below the logo */
 }
 /* END OF SIDE NAVBAR */
+
+@media screen and (max-width: 875px){
+  .side-navbar{
+    width: 70px;
+    padding: 0;
+  }
+  .logo-container{
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding-top: 10px;
+  }
+  .logo-name {
+    display: none;
+  }
+  .logo {
+    width: 40px; /* Adjust based on your design; use a fixed width or percentage */
+  }
+  .navbar-button{
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding-right: 15px;
+    
+  }
+  .navbar-button-font {
+    display: none; /* Hide the text */
+  }
+  .navbar-button i {
+    margin-left: 0; /* Optional: Adjust icon position */
+  }
+  .navbar-button.active {
+    margin-top: 10px;
+    height: 40px;
+    width: 40px;
+    background-color: #57af5b;
+    color: white;
+    border-radius: 5px; /* Underline is always full width for the active item */
+    margin-left: 15px;
+  }
+  .navbar-button::before {
+    content: ""; /* Required for the pseudo-element */
+    margin-left: 15px;
+    position: absolute; /* Position it relative to the button */
+    top: 0;
+    border-radius: 5px;
+    left: -100%; /* Start off-screen to the left */
+    width: 40px; /* Cover the full width of the button */
+    height: 40px; /* Cover the full height of the button */
+    background-color: #51515b; /* The background color on hover */
+    transition: left 0.3s ease; /* Transition for the sliding effect */
+    z-index: 0; /* Send it behind the text */
+  }
+  .navbar-button-logout p{
+    display: none;
+  }
+  .navbar-button-logout i{
+    font-size: larger;
+  }
+  .navbar-button-logout {
+    background-color: #404048;
+    color: orangered;
+    border-radius: 5px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-top: 315px;
+    cursor: pointer;
+    width: 40px;
+    height: 40px;
+    margin-left: 15px;
+  }
+  .navbar-button-logout:hover {
+    background-color: orangered;
+    color: white;
+    transition: 0.3s ease;
+  }
+}

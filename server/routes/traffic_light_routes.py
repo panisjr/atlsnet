@@ -39,7 +39,6 @@ def update_intersection(id):
     token = request.headers.get("Authorization")
     if not token:
         return jsonify({"error": "Token is missing"}), 401
-
     try:
         trafficLight = TrafficLightSetting.query.filter_by(id=id).one_or_none()
         if not trafficLight:
@@ -65,43 +64,81 @@ def update_intersection(id):
             500,
         )
 
-
 @traffic_light_routes.route("/add_trafficLight/<int:id>/time", methods=["POST"])
 def set_timer(id):
     data = request.get_json()
     new_time = data.get("time")
+    new_day = data.get("day")
     new_traffic_mode = data.get("traffic_mode")
-    camera_id = data.get("selectedCameraId")
-    print(camera_id)
+    new_traffic_light_name = data.get("traffic_light_name")
+    selected_camera_id = data.get("selectedCameraId")
+
+    # Check if traffic light exists
     traffic_light = TrafficLightSetting.query.filter_by(id=id).one_or_none()
     if not traffic_light:
         return jsonify({"error": "Traffic Light not found"}), 404
 
-    # Validate time format
+    # Convert `selected_camera_id` to `None` if it's invalid
+    if selected_camera_id in [None, "", 0]:
+        camera_id = None
+    else:
+        try:
+            camera_id = int(selected_camera_id)
+            camera = Camera.query.get(camera_id)
+            if not camera:
+                return jsonify({"error": "Selected camera does not exist."}), 400
+        except ValueError:
+            return jsonify({"error": "Invalid camera ID format."}), 400
+    
+    # Validate time format based on mode
     if new_traffic_mode == "Static":
         if not re.match(r"^[0-9]{2}:[0-9]{2} - [0-9]{2}:[0-9]{2} : \d+$", new_time):
-            return jsonify({"error": "Invalid time format. Use HH:MM - HH:MM : Timer format"}), 400
+            return jsonify({"error": "Invalid static time format. Use HH:MM - HH:MM : Timer format"}), 400
     elif new_traffic_mode == "Dynamic":
         if not re.match(r"^[0-9]{2}:[0-9]{2} - [0-9]{2}:[0-9]{2}$", new_time):
-            return jsonify({"error": "Invalid time format. Use HH:MM - HH:MM format"}), 400
+            return jsonify({"error": "Invalid dynamic time format. Use HH:MM - HH:MM format"}), 400
 
-    # Check for duplicates
-    existing_timer = TrafficLightSetting.query.filter_by(
-        intersection_id=id,
-        traffic_light_timer=new_time,
-        traffic_mode=new_traffic_mode
-    ).one_or_none()
+    # Parse start and end times from the new time range
+    time_match = re.match(r"^([0-9]{2}:[0-9]{2}) - ([0-9]{2}:[0-9]{2})", new_time)
+    if not time_match:
+        return jsonify({"error": "Failed to parse time range."}), 400
+    new_start_time, new_end_time = time_match.groups()
 
-    if existing_timer:
-        return jsonify({"error": "The time is already set!"}), 401
+    # Check for overlapping time ranges on the same day and mode
+    traffic_lights = TrafficLightSetting.query.filter_by(intersection_id=id, day=new_day, traffic_mode=new_traffic_mode).all()
+    for existing_light in traffic_lights:
+        if existing_light.traffic_mode == "Static":
+            existing_match = re.match(r"^([0-9]{2}:[0-9]{2}) - ([0-9]{2}:[0-9]{2}) : \d+", existing_light.traffic_light_timer)
+        else:
+            existing_match = re.match(r"^([0-9]{2}:[0-9]{2}) - ([0-9]{2}:[0-9]{2})", existing_light.traffic_light_timer)
+        
+        if existing_match:
+            existing_start_time, existing_end_time = existing_match.groups()
+            
+            # Check for any overlap within the time ranges
+            if (
+                (new_start_time <= existing_end_time and new_end_time >= existing_start_time) or
+                (new_start_time == existing_start_time and new_end_time == existing_end_time)
+            ):
+                return jsonify({
+                    "error": f"Cannot set time {new_start_time} - {new_end_time}. It conflicts with an existing time range "
+                             f"{existing_start_time} - {existing_end_time} set to {existing_light.traffic_mode} mode."
+                }), 409
+
+    # # Prevent duplicate traffic light names on the same day and mode
+    # if any(existing_light.traffic_light_name == new_traffic_light_name and
+    #        existing_light.day == new_day and
+    #        existing_light.traffic_mode == new_traffic_mode
+    #        for existing_light in traffic_lights):
+    #     return jsonify({"error": "Traffic Light with this name and mode already set!"}), 409
 
     try:
         # Create a new TrafficLightSetting instance
         new_timer_setting = TrafficLightSetting(
             intersection_id=traffic_light.intersection_id,
-            camera_id=traffic_light.camera_id,
-            day=traffic_light.day,
-            traffic_light_name=traffic_light.traffic_light_name,
+            camera_id=camera_id,
+            day=new_day,
+            traffic_light_name=new_traffic_light_name,
             traffic_light_timer=new_time,
             traffic_mode=new_traffic_mode
         )
@@ -115,6 +152,7 @@ def set_timer(id):
         db.session.rollback()
         print(f"Error: {str(e)}")  # Log the exception details
         return jsonify({"error": "An error occurred while adding the new timer"}), 500
+
 
 @traffic_light_routes.route("/add_camera", methods=["POST"])
 def add_camera():

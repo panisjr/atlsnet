@@ -3,7 +3,8 @@ import "./SignIn.css";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { decodeJwt } from "jose";
-
+import AOS from "aos";
+import "aos/dist/aos.css"; // Import AOS styles
 const SignIn = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -11,7 +12,10 @@ const SignIn = () => {
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(null);
   const [showMessage, setShowMessage] = useState(false);
-
+  // For animation
+  useEffect(() => {
+    AOS.init({ duration: 1000, easing: "ease-out", once: true });
+  }, []);
   // To verify account signIn
   const handleLogin = async (event) => {
     event.preventDefault();
@@ -58,8 +62,8 @@ const SignIn = () => {
   const navigate = useNavigate();
 
   const handleClick = (event, item) => {
-    if (item === "landingPage") {
-      navigate("/landingPage");
+    if (item === "/") {
+      navigate("/");
     }
   };
   return (
@@ -67,7 +71,9 @@ const SignIn = () => {
       <div className="container-fluid vw-100">
         <div className="row vh-100 undraw">
           <div className="col-12 d-flex align-items-center justify-content-center">
-            <div className="col-9 p-3 pt-4 pb-4 signIn-container">
+            <div
+              className="col-9 p-3 pt-4 pb-4 signIn-container"
+            >
               <div className="logoContainer justify-content-around">
                 <img
                   src="/logo.png"
@@ -110,7 +116,7 @@ const SignIn = () => {
                     Want to know more{" "}
                     <span
                       className="text-danger cursor-pointer"
-                      onClick={(e) => handleClick(e, "landingPage")}
+                      onClick={(e) => handleClick(e, "/")}
                     >
                       about us
                     </span>
@@ -120,35 +126,35 @@ const SignIn = () => {
               </form>
             </div>
           </div>
-          <footer class="bg-dark text-light pt-3">
+          <footer class="bg-dark text-light pt-3 " data-aos="slide-up">
             <div class="container">
               <div class="row">
-                <div class="col-12 col-md-4">
+                <div class="col-12 col-md-4" data-aos="fade-up">
                   <h5>About Us</h5>
-                  <p>Ensuring a smooth traffic flow and provide valuable insight of traffic trends.</p>
+                  <p>
+                    Ensuring a smooth traffic flow and provide valuable insight
+                    of traffic trends.
+                  </p>
                 </div>
-                <div class="col-12 col-md-4">
+                <div class="col-12 col-md-4" data-aos="fade-up">
                   <h5>Contact</h5>
                   <ul class="list-unstyled">
                     <li>
-                      <a href="#" class="text-light">
-                        Email Us
+                      <a href="https://mail.google.com" class="text-light">
+                        Email Us <span className="ms-5">atls@gmail.com</span>
                       </a>
                     </li>
                     <li>
                       <a href="#" class="text-light">
-                        Location
+                        Location <span className="ms-5">example</span>
                       </a>
                     </li>
                   </ul>
                 </div>
-                <div class="col-12 col-md-4">
+                <div class="col-12 col-md-4" data-aos="fade-up">
                   <h5>Follow Us</h5>
                   <a href="#" class="text-light me-3">
                     <i class="bi bi-facebook"></i>
-                  </a>
-                  <a href="#" class="text-light me-3">
-                    <i class="bi bi-twitter"></i>
                   </a>
                   <a href="#" class="text-light">
                     <i class="bi bi-instagram"></i>

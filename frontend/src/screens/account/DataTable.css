@@ -1,0 +1,44 @@
+/* DataTable.css */
+.tableContainer {
+  height:550px; /* Adjust height to fit your needs */
+  background-color: gray;
+  width: 100%;
+  overflow-y: auto;
+  overflow-x: hidden; /* Hide horizontal scroll */
+  margin-bottom: 1rem; /* Space below the table */
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.table thead th {
+  position: sticky;
+  z-index: 2;
+  top: 0;
+  background: #f8f9fa; /* Adjust header background */
+}
+.table tbody tr{
+  font-size: 14px;
+}
+
+.searchBar{
+  width: 400px;
+  margin-left: auto;
+}
+.bg-orange{
+  background-color: orangered;
+}
+.btn-orange{
+  background-color: orangered;
+  color: white;
+}
+.btn-orange:hover{
+  background-color: #d23b04;
+  color: white;
+}
+/* ffd000 */
+.font-orange{
+  color: orangered;
+}

@@ -1,7 +1,11 @@
 // ToastNotification.jsx
-import React from 'react';
+import React, { useEffect } from 'react';
+import AOS from 'aos';
 
 export const ToastNotification = ({ showMessage, error, success }) => {
+  useEffect(()=>{
+    AOS.init({duration:500, easing:"ease-in-out", once:false})
+  },[])
   return (
     showMessage && (
       <div
@@ -9,6 +13,7 @@ export const ToastNotification = ({ showMessage, error, success }) => {
         aria-atomic="true"
         className="toastContainer"
         style={{ zIndex: 9999 }}
+        data-aos="slide-left"
       >
         <div className="toast-wrapper">
           <div

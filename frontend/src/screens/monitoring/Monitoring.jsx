@@ -5,9 +5,12 @@ import TrafficLight from "./TrafficLight";
 import LogoutModal from "../LogoutModal";
 import SideNavbar from "../SideNavbar";
 import "./Monitoring.css";
-import Testing from "../Testing";
-import CameraManager from "./CameraManager";
+// Get current day as a string, e.g., "Monday"
+const getCurrentDay = () => {
+  return new Date().toLocaleDateString("en-US", { weekday: "long" });
+};
 const Monitoring = () => {
+  const api = "http://localhost:5000"
   // State variables
   const [selectedFiles, setSelectedFiles] = useState([null, null, null, null]);
   const [processedVideoUrls, setProcessedVideoUrls] = useState([
@@ -37,7 +40,7 @@ const Monitoring = () => {
 
   // Fetch Datas
   useEffect(() => {
-    document.title = "ATLS | Dashboard";
+    document.title = "ATLS | Monitoring";
     fetchWeekPlan();
     fetchTrafficLightSetting();
     fetchVideo();
@@ -123,7 +126,7 @@ const Monitoring = () => {
       formData.append("video_file", selectedFiles[index]);
 
       const response = await axios.post(
-        "http://localhost:5000/videos/video_feed",
+        `${api}/videos/video_feed`,
         formData,
         {
           headers: {
@@ -148,7 +151,7 @@ const Monitoring = () => {
 
       // Get processed video URL
       const processedVideoResponse = await axios.get(
-        "http://localhost:5000/videos/processed_video",
+        `${api}/videos/processed_video`,
         {
           responseType: "blob",
         }
@@ -240,14 +243,14 @@ const Monitoring = () => {
   const [weekPlan, setWeekPlan] = useState([]);
   const fetchWeekPlan = async () => {
     const response = await axios.get(
-      "http://localhost:5000/weekPlan/get_weekPlan"
+      `${api}/weekPlan/get_weekPlan`
     );
     setWeekPlan(response.data);
   };
   const [trafficLightSettings, setTrafficLightSettings] = useState([]);
   const fetchTrafficLightSetting = async () => {
     const response = await axios.get(
-      "http://localhost:5000/weekPlan/get_trafficLight"
+      `${api}/weekPlan/get_trafficLight`
     );
     setTrafficLightSettings(response.data);
   };
@@ -263,7 +266,7 @@ const Monitoring = () => {
 
   // Video Upload for vehicle counting
   const fetchVideo = async () => {
-    const response = await axios.get("http://localhost:5000/videos/get_videos");
+    const response = await axios.get(`${api}/videos/get_videos`);
     setVidSrc(response.data);
   };
   // DELETE IMAGE
@@ -271,7 +274,7 @@ const Monitoring = () => {
     try {
       const token = sessionStorage.getItem("token");
       const response = await axios.delete(
-        `http://localhost:5000/videos/delete_video/${id}`,
+        `${api}/videos/delete_video/${id}`,
         {
           headers: {
             Authorization: `${token}`,
@@ -300,9 +303,12 @@ const Monitoring = () => {
         <div className="row">
           <SideNavbar handleClick={handleClick} active={active} />
           <div className="col-10 col-md-10 p-4">
+              <h6 className="p-3">
+                <span className="text-secondary">Pages</span> / Monitoring
+              </h6>
             <div className="row monitoringContainer">
               {/* Lane selection and upload section */}
-              <div className="d-flex align-items-center justify-content-center  mt-5 pt-5">
+              <div className="d-flex align-items-center justify-content-center">
                 <select
                   onChange={(event) =>
                     setSelectedIndex(parseInt(event.target.value))
@@ -352,149 +358,6 @@ const Monitoring = () => {
                     </>
                   )}
               </div>
-              {/* Lane display section */}
-              {[0, 1, 2, 3].map((index) => (
-                <div className="col-md-6" key={index}>
-                  {processedVideoUrls[index] ? (
-                    <div className="border border-black p-2 m-2">
-                      <h5>Lane {index + 1}</h5>
-                      <div className="d-flex align-items-center">
-                        {vidSrc && vidSrc.length > 0 ? (
-                          vidSrc.map((src, index) => (
-                            <video
-                              key={index}
-                              width="540"
-                              height="260"
-                              autoPlay
-                              loop
-                            >
-                              <source src={src.filename} type="video/mp4" />
-                              Your browser does not support the video tag.
-                            </video>
-                          ))
-                        ) : (
-                          <i>No video</i>
-                        )}
-                        <div>
-                          {countdowns[index] && (
-                            <>
-                              {countdowns[index].value > 0 && (
-                                <h5 className="text-white bg-success">Go</h5>
-                              )}
-                              {countdowns[index].value === 1 && (
-                                <h5 className="text-white bg-warning">Slow</h5>
-                              )}
-                              {countdowns[index].value === 0 && (
-                                <h5 className="text-white bg-danger">Stop</h5>
-                              )}
-                              <h5>Timer: {countdowns[index].value} seconds</h5>
-                            </>
-                          )}
-                          {!countdowns[index] && (
-                            <h5 className="text-white bg-danger">Stop</h5>
-                          )}
-                          <div key={index}>
-                            <p>In counts: {counts[index]?.in_counts}</p>
-                            <p>Out counts: {counts[index]?.out_counts}</p>
-                            <button
-                              className="btn btn-danger mt-2"
-                              onClick={() => handleDelete(index)}
-                            >
-                              Delete
-                            </button>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="border border-black p-2 m-2">
-                      <video width="540" height="260" controls>
-                        Your browser does not support the video tag.
-                      </video>
-                    </div>
-                  )}
-                  {errorMessages[index] && (
-                    <p style={{ color: "red" }}>{errorMessages[index]}</p>
-                  )}
-                </div>
-              ))}
-              {/* Lane prioritization display section */}
-              <div>
-                <h4>Lane Vehicle Count and Timer</h4>
-                <table className="table table-bordered table-striped ">
-                  <thead>
-                    <th>No.</th>
-                    <th>Name</th>
-                    <th>Vehicle Count</th>
-                    <th>Timer</th>
-                  </thead>
-                  <tbody>
-                    {sortedTimers.map((timer, index) => {
-                      const laneIndex = Object.keys(counts).find(
-                        (key) => counts[key].in_counts * 3 === timer
-                      );
-                      const laneNumber =
-                        laneIndex !== undefined
-                          ? parseInt(laneIndex) + 1
-                          : null;
-                      return (
-                        <tr key={index}>
-                          <td>{parseInt(index) + 1}</td>
-                          <td>
-                            {laneNumber !== null ? `Lane ${laneNumber}` : ""}
-                          </td>
-                          <td>{counts[laneIndex]?.in_counts}</td>
-                          <td>{timer} seconds</td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </div>
-              <div>
-                {vidSrc && vidSrc.length > 0 ? (
-                  vidSrc.map((src, index) => (
-                    <div>
-                      <table className="table table-bordered">
-                        <thead>
-                          <th>No.</th>
-                          <th>In Counts</th>
-                          <th>Out Counts</th>
-                          <th>Video</th>
-                          <th></th>
-                        </thead>
-                        <tbody>
-                          <tr key={index}>
-                            <td>{index + 1}</td>
-                            <td>{src.in_counts}</td>
-                            <td>{src.out_counts}</td>
-                            <td>
-                              <video
-                                width="540"
-                                height="260"
-                                autoPlay
-                                loop
-                                muted
-                              >
-                                <source src={src.filename} type="video/mp4" />
-                                Your browser does not support the video tag.
-                              </video>
-                            </td>
-                            <td>
-                              <button
-                                className="btn btn-outline-danger bi bi-trash"
-                                onClick={() => deleteVideo(src.id)}
-                              ></button>
-                            </td>
-                          </tr>
-                        </tbody>
-                      </table>
-                    </div>
-                  ))
-                ) : (
-                  <i>No video</i>
-                )}
-              </div>
               <div className="weekPlanContainer">
                 {weekPlan && weekPlan.length > 0 ? (
                   weekPlan.map((road) => (
@@ -502,6 +365,7 @@ const Monitoring = () => {
                       key={road.week_plan_id}
                       groupedByDay={groupedByDay}
                       road={road}
+                      api={api}
                       trafficLightSettings={trafficLightSettings}
                     />
                   ))

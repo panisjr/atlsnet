@@ -1,12 +1,24 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
+import axios from "axios";
+import StaticTrafficLights from "./StaticTrafficLights";
+import DynamicTrafficLights from "./DynamicTrafficLights";
+import Hls from "hls.js";
+import { io } from "socket.io-client";
+const TrafficLight = ({ groupedByDay, road, api, trafficLightSettings }) => {
+  const [inCounts, setInCounts] = useState(0);
+  const [outCounts, setOutCounts] = useState(0);
+  const [serverMessage, setServerMessage] = useState("");
+  const videoRef = useRef(null);
+  const hls = useRef(null); // useRef to persist hls instance
+  const socket = useRef(null);
+  const hlsStreamUrl = "http://localhost:5000/videos/stream.m3u8"; // HLS Stream URL
 
-const TrafficLight = ({ groupedByDay, road }) => {
-  const [activeStaticTimers, setActiveStaticTimers] = useState([]); // Store active Static timers
-  const [activeDynamicTimers, setActiveDynamicTimers] = useState([]); // Store active Dynamic timers
-  const [currentTimerIndex, setCurrentTimerIndex] = useState(0); // Index of the currently active Static timer
-  const [countdown, setCountdown] = useState(null); // Store the countdown value for Static timers
-  const [isCountingDown, setIsCountingDown] = useState(false); // Track if countdown is active for Static timers
-  const [delayCountdown, setDelayCountdown] = useState(null); // Store the 3-second delay countdown for Static timers
+  const [activeStaticTimers, setActiveStaticTimers] = useState([]);
+  const [activeDynamicTimers, setActiveDynamicTimers] = useState([]);
+  const [currentTimerIndex, setCurrentTimerIndex] = useState(0);
+  const [countdown, setCountdown] = useState(null);
+  const [isCountingDown, setIsCountingDown] = useState(false);
+  const [delayCountdown, setDelayCountdown] = useState(null);
 
   const dayOrder = {
     Sunday: 0,
@@ -32,13 +44,13 @@ const TrafficLight = ({ groupedByDay, road }) => {
       return hours * 60 + minutes;
     });
 
-      // Handle scenarios where the end time may wrap around (e.g., from 23:00 to 00:01)
-  if (endTime < startTime) {
-    return currentTime >= startTime || currentTime <= endTime;
-  }
+    // Handle scenarios where the end time may wrap around (e.g., from 23:00 to 00:01)
+    if (endTime < startTime) {
+      return currentTime >= startTime || currentTime <= endTime;
+    }
 
-  return currentTime >= startTime && currentTime <= endTime;
-};
+    return currentTime >= startTime && currentTime <= endTime;
+  };
 
   const updateActiveTimers = () => {
     const newStaticTimers = [];
@@ -106,7 +118,11 @@ const TrafficLight = ({ groupedByDay, road }) => {
   }, [groupedByDay]);
 
   useEffect(() => {
-    if (activeStaticTimers.length > 0 && !isCountingDown && delayCountdown === null) {
+    if (
+      activeStaticTimers.length > 0 &&
+      !isCountingDown &&
+      delayCountdown === null
+    ) {
       startNextStaticTimer();
     }
 
@@ -158,34 +174,102 @@ const TrafficLight = ({ groupedByDay, road }) => {
   }, [countdown, delayCountdown]);
   
   const startCounting = async () => {
-    if (selectedCameraId) {
+    const selectedCameraId = road.camera_info.camera_id;
+    if (selectedCameraId && api) {
       try {
-        const response = await axios.get(
+        const { data } = await axios.post(
           `${api}/videos/start_counting/${selectedCameraId}`
         );
-        console.log(response.data.message); // Display success message
+        console.log(data.message);
       } catch (error) {
         console.error("Error starting counting:", error);
       }
-    } else {
-      alert("Please select a camera first.");
-    }
+    } else alert("Please select a camera first.");
   };
-
   const startHLS = async () => {
-    if (selectedCameraId) {
+    const selectedCameraId = road.camera_info.camera_id;
+    if (selectedCameraId && api) {
       try {
-        const response = await axios.post(
+        const { data } = await axios.post(
           `${api}/videos/start_hls/${selectedCameraId}`
         );
-        console.log(response.data.message); // Display success message
+        console.log(data.message);
       } catch (error) {
         console.error("Error starting HLS:", error);
       }
-    } else {
-      alert("Please select a camera first.");
-    }
+    } else alert("Please select a camera first.");
   };
+
+ useEffect(() => {
+    const startHLSTimeout = setTimeout(startHLS, 5000);
+    const startCountingTimeout = setTimeout(startCounting, 3000);
+
+    // Initialize socket connection and listeners only once
+    if (!socket.current) {
+      socket.current = io("http://localhost:5000", {
+        transports: ["websocket", "polling"],
+      });
+
+      socket.current.on("connect", () => {
+        console.log("Connected to Socket.IO server");
+      });
+
+      socket.current.on("update_message", (data) => {
+        setServerMessage(data.message || "");
+        setInCounts(data.in_counts || 0);
+        setOutCounts(data.out_counts || 0);
+      });
+    }
+
+    // Initialize HLS.js for video streaming only once
+    if (!hls.current && videoRef.current) {
+      hls.current = new Hls({
+        maxBufferLength: 10,
+        maxBufferSize: 100 * 1024,
+        maxMaxBufferLength: 15,
+        lowLatencyMode: true,
+        liveSyncDuration: 2,
+        liveMaxLatencyDuration: 3,
+        levelLoadingMaxRetry: 3,
+      });
+
+      hls.current.loadSource(hlsStreamUrl);
+      hls.current.attachMedia(videoRef.current);
+
+      hls.current.on(Hls.Events.MANIFEST_PARSED, () => {
+        videoRef.current.play();
+      });
+
+      hls.current.on(Hls.Events.ERROR, (event, data) => {
+        if (data.fatal) {
+          switch (data.type) {
+            case Hls.ErrorTypes.NETWORK_ERROR:
+              setTimeout(() => {
+                hls.current.loadSource(hlsStreamUrl);
+                hls.current.attachMedia(videoRef.current);
+              }, 3000);
+              break;
+            case Hls.ErrorTypes.MEDIA_ERROR:
+              hls.current.recoverMediaError();
+              break;
+            default:
+              hls.current.destroy();
+              break;
+          }
+        }
+      });
+    }
+
+    // Clean up resources on component unmount
+    return () => {
+      clearTimeout(startCountingTimeout);
+      clearTimeout(startHLSTimeout);
+      hls.current?.destroy();
+      hls.current = null;
+      socket.current?.disconnect();
+      socket.current = null;
+    };
+  }, []);
   return (
     <div className="p-2" key={road.week_plan_id}>
       <div className="d-flex align-items-center justify-content-between">
@@ -195,7 +279,9 @@ const TrafficLight = ({ groupedByDay, road }) => {
         {Object.keys(groupedByDay)
           .filter((day) =>
             groupedByDay[day].some(
-              (light) => light.intersection_id === road.intersection_id
+              (light) =>
+                light.intersection_id === road.intersection_id &&
+                light.day === getCurrentDay()
             )
           )
           .sort((a, b) => dayOrder[a] - dayOrder[b])
@@ -215,97 +301,30 @@ const TrafficLight = ({ groupedByDay, road }) => {
                       <th>Status</th>
                     </tr>
                   </thead>
-                  <h6>Static Traffic Lights</h6>
-                  <tbody>
-                    {groupedByDay[day]
-                      .filter(
-                        (light) =>
-                          light.intersection_id === road.intersection_id &&
-                          light.traffic_mode === "Static"
-                      )
-                      .map((light) => {
-                        const isActive =
-                          light.traffic_light_id ===
-                          (activeStaticTimers[currentTimerIndex]?.id || null);
-                        return (
-                          <tr key={light.traffic_light_id}>
-                            <td>{light.traffic_light_name || <i>No Name</i>}</td>
-                            <td>
-                              {light.traffic_light_timer ? (
-                                light.traffic_light_timer
-                                  .split(";")
-                                  .map((segment, index) => {
-                                    const [timeRange, timer] =
-                                      segment.split(" : ");
-                                    return (
-                                      <div
-                                        key={index}
-                                        style={{
-                                          color: isActive ? "green" : "black",
-                                          fontWeight: isActive ? "bold" : "normal",
-                                        }}
-                                      >
-                                        {timeRange?.trim()}
-                                        {timer ? (
-                                          <span style={{ color: "red" }}>
-                                            {` : ${timer.trim()}`}
-                                          </span>
-                                        ) : null}
-                                      </div>
-                                    );
-                                  })
-                              ) : (
-                                <i>No Timer</i>
-                              )}
-                            </td>
-                            <td>
-                              {isActive ? (
-                                delayCountdown !== null ? (
-                                  <span className="text-warning fw-bold">
-                                    {`${delayCountdown} get ready...`}
-                                  </span>
-                                ) : countdown !== null ? (
-                                  <span className="text-success fw-bold">
-                                    {`${countdown} seconds remaining`}
-                                  </span>
-                                ) : (
-                                  "Finished"
-                                )
-                              ) : (
-                                <span className="text-danger fw-bold">STOP</span>
-                              )}
-                            </td>
-                          </tr>
-                        );
-                      })}
-                  </tbody>
-                  <h6>Dynamic Traffic Lights</h6>
-                  <tbody>
-                    {groupedByDay[day]
-                      .filter(
-                        (light) =>
-                          light.intersection_id === road.intersection_id &&
-                          light.traffic_mode === "Dynamic"
-                      )
-                      .map((light) => {
-                        const isActive = activeDynamicTimers.some(
-                          (dynamicLight) => dynamicLight.id === light.traffic_light_id
-                        );
-                        return (
-                          <tr key={light.traffic_light_id}>
-                            <td>{light.traffic_light_name || <i>No Name</i>}</td>
-                            <td>{light.traffic_light_timer || <i>No Timer</i>}</td>
-                            <td>
-                              {isActive ? (
-                                <span className="text-success fw-bold">Active</span>
-                              ) : (
-                                <span className="text-danger fw-bold">Inactive</span>
-                              )}
-                            </td>
-                          </tr>
-                        );
-                      })}
-                  </tbody>
+
+                  <StaticTrafficLights
+                    staticLights={groupedByDay[day].filter(
+                      (light) =>
+                        light.intersection_id === road.intersection_id &&
+                        light.traffic_mode === "Static"
+                    )}
+                    currentTimerIndex={currentTimerIndex}
+                    activeStaticTimers={activeStaticTimers}
+                    delayCountdown={delayCountdown}
+                    countdown={countdown}
+                  />
+
+                  <DynamicTrafficLights
+                    dynamicLights={groupedByDay[day].filter(
+                      (light) =>
+                        light.intersection_id === road.intersection_id &&
+                        light.traffic_mode === "Dynamic"
+                    )}
+                    activeDynamicTimers={activeDynamicTimers}
+                    videoRef={videoRef}
+                    inCounts={inCounts}
+                    outCounts={outCounts}
+                  />
                 </table>
               </div>
             </div>

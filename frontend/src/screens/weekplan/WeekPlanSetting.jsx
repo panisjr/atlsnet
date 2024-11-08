@@ -31,6 +31,7 @@ const WeekPlanSetting = () => {
     traffic_light_name: "",
     traffic_light_id: "",
     intersection_id: "",
+    camera_id: "",
     intersection_name: "",
     day: "",
     traffic_mode: "", //System Mode static or dynamic
@@ -422,7 +423,7 @@ const WeekPlanSetting = () => {
   // ADD TRAFFIC LIGHT
   const addTrafficLightTimer = async (id) => {
     try {
-      console.log(selectedCameraId)
+      console.log(selectedCameraId);
       let newTime; // Declare newTime outside the if-else block
       let trafficMode = selected.traffic_mode; // Get the timer mode directly
       if (trafficMode === "Static") {
@@ -439,7 +440,7 @@ const WeekPlanSetting = () => {
         ...selected, // Spread the existing properties from selected
         time: newTime, // Add the constructed time
         traffic_mode: setTrafficMode,
-        selectedCameraId: selectedCameraId
+        selectedCameraId: selectedCameraId,
       };
 
       const response = await axios.post(
@@ -515,9 +516,33 @@ const WeekPlanSetting = () => {
     const response = await axios.get(`${api}/videos/get_cameras`);
     setCameras(response.data);
   };
+  const deleteCamera = async (id) => {
+    try {
+      const token = sessionStorage.getItem("token");
+      const response = await axios.delete(`${api}/videos/delete_camera/${id}`, {
+        headers: {
+          Authorization: `${token}`, // Ensure the token is prefixed with "Bearer " if your backend expects it
+        },
+      });
+      setShowMessage(true);
+      setSuccess(response.data.message);
+      setTimeout(() => {
+        setShowMessage(false);
+        setSuccess(null);
+      }, 3000);
+      fetchCameras();
+    } catch (error) {
+      setShowMessage(true);
+      setError(error.response?.data?.error);
+      setTimeout(() => {
+        setShowMessage(false);
+        setError(null);
+      }, 3000);
+    }
+  };
   const addCamera = async () => {
     try {
-      const rtsp_url = `rtsp://${username}:${password}@${camera_ip}:${port}/stream${stream}`;
+      const rtsp_url = `rtsp://${username}:${password}@${camera_ip}:${port}/${stream}`;
       console.log("RTSP URL:", rtsp_url); // This will show your RTSP URL in the console for verification
 
       const response = await axios.post(
@@ -588,7 +613,7 @@ const WeekPlanSetting = () => {
           <div className="col-10 col-md-10 p-4 weekPlanContainer">
             <div class="row">
               <div className="d-flex align-items-center justify-content-start">
-                <h6 className="ms-3 me-2">
+                <h6 className="p-3">
                   <span className="text-secondary">Pages</span> / Week Plan
                 </h6>
               </div>
@@ -766,7 +791,7 @@ const WeekPlanSetting = () => {
                             name="camera_ip"
                             value={camera_ip}
                             onChange={(e) => setCameraIP(e.target.value)}
-                            placeholder="Camera IP"
+                            placeholder="Camera IP(192.168.100.25)"
                           />
                           <input
                             className="form-control"
@@ -775,7 +800,7 @@ const WeekPlanSetting = () => {
                             name="port"
                             value={port}
                             onChange={(e) => setPort(e.target.value)}
-                            placeholder="Port"
+                            placeholder="Port(554)"
                           />
                           <input
                             className="form-control"
@@ -784,7 +809,7 @@ const WeekPlanSetting = () => {
                             name="stream"
                             value={stream}
                             onChange={(e) => setStream(e.target.value)}
-                            placeholder="Stream No."
+                            placeholder="Stream Name (stream1)"
                           />
                         </div>
                         <div>
@@ -806,6 +831,45 @@ const WeekPlanSetting = () => {
                         </button>
                       </form>
                     </div>
+                    <table className="table table-bordered table-striped">
+                      <thead>
+                        <tr>
+                          <th>ID</th>
+                          <th>Camera Name</th>
+                          <th>RTSP URL</th>
+                          <th>Location</th>
+                          <th>Status</th>
+                          <th></th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {cameras && cameras.length > 0 ? (
+                          cameras.map((camera) => (
+                            <tr key={camera.id}>
+                              <td>{camera.id}</td>
+                              <td>{camera.name}</td>
+                              <td>{camera.rtsp_url}</td>
+                              <td>{camera.location}</td>
+                              <td>{camera.status}</td>
+                              <td>
+                                <i
+                                  className="bi bi-trash text-danger cursor-pointer"
+                                  onClick={() =>
+                                    deleteCamera(camera.id)
+                                  }
+                                ></i>
+                              </td>
+                            </tr>
+                          ))
+                        ) : (
+                          <tr>
+                            <td colSpan="6" className="text-center">
+                              No camera
+                            </td>
+                          </tr>
+                        )}
+                      </tbody>
+                    </table>
                   </div>
                 </div>
               </div>
@@ -1098,7 +1162,10 @@ const WeekPlanSetting = () => {
                             Select Timer Mode
                           </label>
                         </div>
-
+                        <CameraManager
+                          selectedCameraId={selectedCameraId}
+                          setSelectedCameraId={setSelectedCameraId}
+                        />
                         {/* Shared Start Time and End Time */}
                         <div className="d-flex align-items-center justify-content-start">
                           <div className="form-floating mt-2">

@@ -17,8 +17,7 @@ const WeekPlanTable = ({
           <div className="weekPlanTable" key={road.week_plan_id}>
             <div className="d-flex align-items-center justify-content-between">
               <p>
-                {road.intersection_name}:{" "}
-                <span className="fw-semibold">{road.intersection_id}</span>
+                {road.intersection_name}
               </p>
               <div className="d-flex align-items-center justify-content-around">
                 <h5

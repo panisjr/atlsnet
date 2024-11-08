@@ -2,3 +2,15 @@
     overflow-y: auto;
     height: 100%;
 }
+@media screen and (max-width: 876px) {
+    /* Styles for extra small screens (small phones) */
+    .monitoringContainer {
+      width: 100%;
+    }
+  }
+  @media screen and (max-width: 576px) {
+    /* Styles for extra small screens (small phones) */
+    .monitoringContainer {
+      width: 70%;
+    }
+  }
