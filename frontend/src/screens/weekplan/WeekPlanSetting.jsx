@@ -556,6 +556,7 @@ const WeekPlanSetting = () => {
       );
       clearForm();
       setShowMessage(true);
+      fetchCameras();
       setSuccess(response.data.message);
       setTimeout(() => {
         setShowMessage(false);

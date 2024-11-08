@@ -4,7 +4,7 @@ from datetime import datetime
 class TrafficLightSetting(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     intersection_id = db.Column(db.Integer, db.ForeignKey('intersection.id', name='intersection_id_fkey'), nullable=False)
-    camera_id = db.Column(db.Integer, db.ForeignKey('cameras.id', name='camera_id_fkey'), nullable=True)
+    camera_id = db.Column(db.Integer, db.ForeignKey('cameras.id', name='camera_id_fkey', ondelete='RESTRICT'), nullable=True)
     day = db.Column(db.Text, nullable=True)
     traffic_light_name = db.Column(db.Text, nullable=True)
     traffic_light_timer = db.Column(db.Text, nullable=True)
