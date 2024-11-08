@@ -18,8 +18,8 @@ function App() {
   return (
     <BrowserRouter>
       <Routes>
-        <Route path="/" element={<SignIn />} />
-        <Route path="/landingPage" element={<LandingPage/>}/>
+        <Route path="/" element={<LandingPage/>}/>
+        <Route path="/signIn" element={<SignIn />} />
         <Route
           path="/dashboard"
           element={
@@ -39,9 +39,9 @@ function App() {
         <Route
           path="/accounts"
           element={
-            <ProtectedRoute>
+            // <ProtectedRoute>
               <AccountManagement />
-            </ProtectedRoute>
+            // </ProtectedRoute>
           }
         />
         <Route
