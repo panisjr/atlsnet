@@ -18,7 +18,7 @@ def create_app():
     # Register the main routes blueprint
     app.register_blueprint(main_routes)
 
-    @app.route('/')
+    @app.route('/home')
     def home():
         return "Welcome to the Traffic Management API!"
 
