@@ -25,8 +25,15 @@ def create_app():
     return app, socketio  # Return both app and socketio instances
 
 if __name__ == "__main__":
+    # Create app and socketio instances
     app, socketio = create_app()  # Unpack the returned values
+    
+    # Initialize socketio with the app
+    socketio.init_app(app)  
+    
+    # Create database tables (ensure the database is properly connected)
     with app.app_context():
         db.create_all()  # Create database tables
-    socketio.init_app(app)  # Initialize socketio with the app
-    socketio.run(app, debug=True)  # Use socketio.run to start the server
+
+    # Start the server with socketio
+    socketio.run(app, host='0.0.0.0', port=8000, debug=True)
