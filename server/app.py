@@ -22,15 +22,15 @@ def create_app():
     def home():
         return "Welcome to the Traffic Management API!"
 
-    return app, socketio  # Return both app and socketio instances
+    return app  # Only return the app instance, socketio will be initialized separately
+
+# Create app instance outside the function
+app = create_app()
+
+# Initialize socketio with the app
+socketio.init_app(app)  
 
 if __name__ == "__main__":
-    # Create app and socketio instances
-    app, socketio = create_app()  # Unpack the returned values
-    
-    # Initialize socketio with the app
-    socketio.init_app(app)  
-    
     # Create database tables (ensure the database is properly connected)
     with app.app_context():
         db.create_all()  # Create database tables
