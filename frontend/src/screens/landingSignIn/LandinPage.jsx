@@ -111,7 +111,7 @@ const LandingPage = () => {
                     style={{ backgroundImage: "url('./traffic.jpg')" }}
                   ></div>
                   <div className="row vh-100 align-items-center">
-                    <div className="col-lg-7 py-vh-6" data-aos="fade-right">
+                    <div className="col-lg-7 py-vh-6 text-container" data-aos="fade-right">
                       <h1 className="display-1 fw-bold mt-5">
                         Enhance T<span className="text-white">raffic</span>{" "}
                         Flow!

@@ -1,22 +1,32 @@
 .bg-cover {
-    background-size: cover;
-    background-position: center center;
+  background-size: cover;
+  background-position: center center;
+}
+.navbar {
+  transition: background-color 0.3s, box-shadow 0.3s;
+}
+
+.navbar.scrolled {
+  background-color: rgba(255, 255, 255, 0.9);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+.bg-gray {
+  background-color: rgb(234, 234, 234);
+  border: none;
+}
+.gradient-icon {
+  background: linear-gradient(45deg, #0084ff 20%, #792ee5 40%, #ff138d 100%);
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  display: inline-block;
+}
+
+@media screen and (max-width: 640px) {
+  .display-1 {
+    color: white;
   }
-  .navbar {
-    transition: background-color 0.3s, box-shadow 0.3s;
+  .text-container{
+    height: 500px;
+    justify-content: space-between;
   }
-  
-  .navbar.scrolled {
-    background-color: rgba(255, 255, 255, 0.9);
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-  }
-  .bg-gray{
-    background-color: rgb(234, 234, 234);
-    border: none;
-  }
-  .gradient-icon {
-    background: linear-gradient(45deg, #0084FF 20%, #792EE5 40%, #ff138d 100%);
-    background-clip: text;
-    -webkit-text-fill-color: transparent;
-    display: inline-block;
-  }
+}
