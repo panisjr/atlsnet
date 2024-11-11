@@ -556,7 +556,6 @@ const WeekPlanSetting = () => {
       );
       clearForm();
       setShowMessage(true);
-      fetchCameras();
       setSuccess(response.data.message);
       setTimeout(() => {
         setShowMessage(false);
@@ -607,17 +606,15 @@ const WeekPlanSetting = () => {
   };
   return (
     <>
-      <div className="container-fluid vw-100">
+      <div className="container-fluid vw-100 vh-100">
         <div className="row">
           <SideNavbar active={active} handleClick={handleClick} />
 
-          <div className="col-10 col-md-10 p-4 weekPlanContainer">
-            <div class="row">
-              <div className="d-flex align-items-center justify-content-start">
-                <h6 className="p-3">
-                  <span className="text-secondary">Pages</span> / Week Plan
-                </h6>
-              </div>
+          <div className="col-10 col-md-10 p-4">
+            <h6 className="p-3">
+              <span className="text-secondary">Pages</span> / Week Plan
+            </h6>
+            <div class="row weekPlanContainer">
               <div className="d-flex align-items-center justify-content-between mt-3">
                 <div
                   class="weekplan-button-container nav nav-pills"
@@ -855,9 +852,7 @@ const WeekPlanSetting = () => {
                               <td>
                                 <i
                                   className="bi bi-trash text-danger cursor-pointer"
-                                  onClick={() =>
-                                    deleteCamera(camera.id)
-                                  }
+                                  onClick={() => deleteCamera(camera.id)}
                                 ></i>
                               </td>
                             </tr>
