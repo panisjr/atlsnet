@@ -44,10 +44,11 @@ const ViolationRecord = () => {
 
       // Handle the response from the Flask backend
       fetchImages();
+      handleFileChange(null)
       setExtractedText(response.data.extracted_text);
       setImgSrc(response.data.img_src);
       setShowMessage(true);
-      setSuccess(response.data.msg);
+      setSuccess(response.data.message);
       setTimeout(() => {
         setShowMessage(false);
         setSuccess(null);
@@ -72,7 +73,7 @@ const ViolationRecord = () => {
 
       fetchImages();
       setShowMessage(true);
-      setSuccess(response.data.msg);
+      setSuccess(response.data.message);
       setTimeout(() => {
         setShowMessage(false);
         setSuccess(null);
@@ -129,8 +130,8 @@ const ViolationRecord = () => {
     <>
       <div className="container-fluid vw-100 vh-100">
         <div className="row">
-        <SideNavbar active={active} handleClick={handleClick} />
-          
+          <SideNavbar active={active} handleClick={handleClick} />
+
           <div className="col-10 accountManagementContainer">
             <div className="row d-flex align-items-center justify-content-start">
               <div className="col-12">
@@ -220,7 +221,9 @@ const ViolationRecord = () => {
                         </tbody>
                       ))
                     ) : (
-                      <i className="d-flex align-items-center justify-content-end">No violation found...</i>
+                      <i className="d-flex align-items-center justify-content-end">
+                        No violation found...
+                      </i>
                     )}
                   </table>
                 </div>

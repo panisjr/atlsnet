@@ -5,6 +5,7 @@ import axios from "axios";
 import { decodeJwt } from "jose";
 import AOS from "aos";
 import "aos/dist/aos.css"; // Import AOS styles
+import ToastNotification from "../ToastNotification";
 const SignIn = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -14,7 +15,7 @@ const SignIn = () => {
   const [showMessage, setShowMessage] = useState(false);
   // For animation
   useEffect(() => {
-    AOS.init({ duration: 1000, easing: "ease-out", once: true });
+    AOS.init({ duration: 500, easing: "ease-out", once: true });
   }, []);
   // To verify account signIn
   const handleLogin = async (event) => {
@@ -169,34 +170,7 @@ const SignIn = () => {
         </div>
       </div>
       {/* Toast for success or error messages */}
-      {showMessage && (
-        <div
-          aria-live="polite"
-          aria-atomic="true"
-          className="toastContainer"
-          style={{ zIndex: 9999 }}
-        >
-          <div className="toast-wrapper">
-            <div
-              className={`toast show ${error ? "bg-danger" : "bg-success"}`}
-              role="alert"
-              aria-live="assertive"
-              aria-atomic="true"
-            >
-              <div className="toast-header">
-                <strong className="me-auto">Notification</strong>
-                <button
-                  type="button"
-                  className="btn-close"
-                  data-bs-dismiss="toast"
-                  aria-label="Close"
-                ></button>
-              </div>
-              <div className="toast-body text-white">{error || success}</div>
-            </div>
-          </div>
-        </div>
-      )}
+     <ToastNotification success={success} showMessage={showMessage} error={error}/>
 
       {/* Forgot Modal */}
       <div

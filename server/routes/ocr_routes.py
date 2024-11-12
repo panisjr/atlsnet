@@ -1,120 +1,161 @@
-import os  
-import cv2  # Import OpenCV
-from flask import Blueprint, Flask, render_template, request, jsonify, url_for
+import os
+import cv2
+import numpy as np
+import pytesseract
+from flask import Blueprint, request, jsonify
 from werkzeug.utils import secure_filename
-from .ocr_core import ocr_core  # Importing your existing OCR function
-from models import *
+from models import Images
 from extensions import db
 
+# Blueprint for OCR-related routes
 ocr_routes = Blueprint("ocr_routes", __name__)
 
-# Define a folder to store and later serve the images
-UPLOAD_FOLDER = os.path.join(os.getcwd(), 'static', 'Test_Images')
-ALLOWED_EXTENSIONS = set(['png', 'jpg', 'jpeg'])
+# Configuration for file uploads
+UPLOAD_FOLDER = os.path.join(os.getcwd(), 'static', 'Images')  # Directory to save uploaded images
+ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg'}  # Allowed file types for upload
 
-# Function to check the file extension
+# Ensure the upload folder exists
+os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+
+# Utility function to check allowed file types
 def allowed_file(filename):
-    return '.' in filename and \
-           filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+    """
+    Check if the uploaded file has an allowed extension.
+    """
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
-# Function to preprocess the image for license plate detection
 def preprocess_license_plate(image_path):
+    """
+    Dynamically preprocess the license plate image by adjusting the processing steps
+    based on image quality, contrast, and text characteristics for better OCR performance.
+    """
     # Load the image
     image = cv2.imread(image_path)
 
-    # Convert to grayscale
+    # Check if the image is loaded properly
+    if image is None:
+        raise ValueError("Image not found or unsupported format")
+
+    # Convert the image to grayscale
     gray_image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
 
-    # Apply Gaussian Blur
-    blurred_image = cv2.GaussianBlur(gray_image, (5, 5), 0)
+    # Calculate image variance to check image sharpness/quality
+    var = np.var(gray_image)
+    
+    # Apply different processing steps based on the image quality
+    if var < 1000:  # Low sharpness, apply denoising and contrast adjustment
+        gray_image = cv2.equalizeHist(gray_image)  # Enhance contrast for better visibility
+    
+    # Denoise if necessary
+    if var < 500:  # High noise (low variance)
+        gray_image = cv2.fastNlMeansDenoising(gray_image, None, 30, 7, 21)
+    
+    # Check if the image is very dark or very light (for thresholding)
+    mean_pixel_value = np.mean(gray_image)
 
-    # Use Canny edge detection
-    edges = cv2.Canny(blurred_image, 100, 200)
+    if mean_pixel_value < 100:  # Dark image, use adaptive thresholding
+        _, thresholded_image = cv2.threshold(gray_image, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
+    else:  # Bright image, apply global thresholding
+        _, thresholded_image = cv2.threshold(gray_image, 150, 255, cv2.THRESH_BINARY)
 
-    # Save the processed image temporarily for OCR
-    processed_image_path = os.path.join(UPLOAD_FOLDER, 'processed_' + os.path.basename(image_path))
-    cv2.imwrite(processed_image_path, gray_image)
+    # Resize the image dynamically based on image dimensions (to better capture text)
+    # Resize if the image is too small
+    height, width = thresholded_image.shape
+    if height < 200 or width < 200:
+        thresholded_image = cv2.resize(thresholded_image, None, fx=2, fy=2, interpolation=cv2.INTER_CUBIC)
 
-    # Perform OCR on the processed image using your ocr_core function
-    extracted_text = ocr_core(processed_image_path)
+    # Perform morphological operations (closing) if the image has noise or gaps
+    kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (3, 3))
+    morph_image = cv2.morphologyEx(thresholded_image, cv2.MORPH_CLOSE, kernel)
 
-    # Optionally, remove the processed image if you don't need to keep it
-    os.remove(processed_image_path)
+    # Perform OCR using Tesseract with custom configurations
+    custom_config = r'--oem 1 --psm 6'  # LSTM OCR engine, assuming a single block of text
+    extracted_text = pytesseract.image_to_string(morph_image, config=custom_config)
 
     return extracted_text
 
-# Format user data for the frontend
+# Format database image records for frontend display
 def format_images(image):
+    """
+    Format the image data into a dictionary for JSON response.
+    """
     return {
         "id": image.id,
-        "filename": f"{request.host_url}static/Test_Images/{image.filename}",
+        "filename": f"{request.host_url}static/Images/{image.filename}",
         "extracted_text": image.extracted_text,
         "uploaded_at": image.uploaded_at,
     }
 
-# Route to handle the upload page
+# Route: Upload an image and perform OCR
 @ocr_routes.route('/upload', methods=['POST'])
-def upload_page():
+def upload_image():
+    """
+    Handle image upload, preprocess the image, perform OCR, and store results in the database.
+    """
+    # Check if the file is in the request
     if 'file' not in request.files:
-        return jsonify({"msg": "No file selected"}), 400
+        return jsonify({"error": "No file part in the request"}), 400
 
     file = request.files['file']
 
-    if file.filename == '':
-        return jsonify({"msg": "No file selected"}), 400
+    # Validate the file
+    if not file or file.filename == '':
+        return jsonify({"error": "No file selected"}), 400
 
-    if file and allowed_file(file.filename):
-        # Save the file to the upload folder
-        filename = secure_filename(file.filename)
-        file_path = os.path.join(UPLOAD_FOLDER, filename)
-        file.save(file_path)
-        
-        # Preprocess the image and perform OCR
+    if not allowed_file(file.filename):
+        return jsonify({"error": "File type not allowed"}), 400
+
+    # Save the uploaded file
+    filename = secure_filename(file.filename)
+    file_path = os.path.join(UPLOAD_FOLDER, filename)
+    file.save(file_path)
+
+    try:
+        # Preprocess the image and extract text using OCR
         extracted_text = preprocess_license_plate(file_path)
 
-        # Save to database
-        new_image = Images(filename=filename , extracted_text=extracted_text)
+        # Save the image and extracted text to the database
+        new_image = Images(filename=filename, extracted_text=extracted_text)
         db.session.add(new_image)
         db.session.commit()
 
-        # Construct the image source URL for the frontend
-        img_src = f"{request.host_url}static/Test_Images/{filename}"
-        
-        # Send the result back
+        # Return the result to the client
         return jsonify({
-            "msg": "Successfully processed!",
+            "message": "Successfully processed!",
             "extracted_text": extracted_text,
-            "img_src": img_src
+            "img_src": f"{request.host_url}static/Images/{filename}",
         }), 200
+    except Exception as e:
+        # Handle processing errors
+        return jsonify({"error": f"Failed to process the image: {str(e)}"}), 500
 
-    return jsonify({"msg": "File type not allowed"}), 400
-
-# GET ALL IMAGES
+# Route: Retrieve all uploaded images
 @ocr_routes.route('/images', methods=['GET'])
 def get_images():
-    try: 
+    """
+    Fetch all images and their OCR results from the database.
+    """
+    try:
         images = Images.query.order_by(Images.id.asc()).all()
-        image_urls = [format_images(image) for image in images]
-        print(image_urls)
-        return jsonify(image_urls), 200
-    except Exception as e: 
-        return jsonify({"error": "Can't get the images!!!!"})    
+        image_data = [format_images(image) for image in images]
+        return jsonify(image_data), 200
+    except Exception as e:
+        # Handle errors in fetching images
+        return jsonify({"error": f"Failed to retrieve images: {str(e)}"}), 500
 
-# DELETE IMAGE
+# Route: Delete an uploaded image
 @ocr_routes.route('/delete_image/<int:image_id>', methods=['DELETE'])
 def delete_image(image_id):
-    token = request.headers.get("Authorization")
-    if not token:
-        return jsonify({"error": "Unauthorized! Token is missing!"}), 401
+    """
+    Delete an image and its associated OCR data from the database and filesystem.
+    """
     try:
-        # Find the image by ID
+        # Find the image by its ID
         image = Images.query.get(image_id)
-        print("This is the id: ", image_id)
-        print("This is the image found: ", image)
-        if image is None:
-            return jsonify({"error": "Image not found!"}), 404
+        if not image:
+            return jsonify({"error": "Image not found"}), 404
 
-        # Get the full file path
+        # Get the file path
         file_path = os.path.join(UPLOAD_FOLDER, image.filename)
 
         # Remove the image file if it exists
@@ -125,6 +166,7 @@ def delete_image(image_id):
         db.session.delete(image)
         db.session.commit()
 
-        return jsonify({"msg": "Image deleted successfully!"}), 200
+        return jsonify({"message": "Image deleted successfully"}), 200
     except Exception as e:
-        return jsonify({"error": "Error deleting image!"}), 500
+        # Handle errors during deletion
+        return jsonify({"error": f"Failed to delete image: {str(e)}"}), 500
