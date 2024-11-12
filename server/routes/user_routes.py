@@ -6,7 +6,7 @@ import os
 from extensions import db  # Ensure this is after the initializations in app.py
 from models import Users, Video
 from sqlalchemy import func, Integer
-
+import re
 user_routes = Blueprint("user_routes", __name__)
 
 # Generate a secret key
@@ -28,34 +28,101 @@ def format_user(user):
         "status": user.status,
         "created_at": user.created_at,
     }
+def validate_password(password):
+    if len(password) < 8:
+        return jsonify({"error": "Password must be at least 8 characters long."}), 400
+    
+    if not any(char.isupper() for char in password):
+        return jsonify({"error": "Password must include at least one uppercase letter."}), 400
+    
+    if not any(char.islower() for char in password):
+        return jsonify({"error": "Password must include at least one lowercase letter."}), 400
+    
+    if not any(char.isdigit() for char in password):
+        return jsonify({"error": "Password must include at least one number."}), 400
+    
+    if not re.search(r"[!@#$%^&*(),.?\":{}|<>]", password):
+        return jsonify({"error": "Password must include at least one special character."}), 400
+    
+    # If all checks pass
+    return None  # No errors
+def validate_user_id(user_id):
+    """
+    Validate the user ID to ensure it contains only numbers and is exactly 8 digits long.
+    """
+    # Regular expression for numeric user IDs with exactly 8 digits
+    user_id_regex = r"^\d{8}$"
 
+    # Validate user ID using regex
+    if not re.match(user_id_regex, user_id):
+        if not user_id.isdigit():
+            return jsonify({"error": "User ID must contain only numbers."}), 400
+        elif len(user_id) != 8:
+            return jsonify({"error": "User ID must be exactly 8 digits long."}), 400
 
+    return None
 # CREATE USER
 @user_routes.route("/create_user", methods=["POST"])
 def create_users():
     data = request.get_json()
     email = data.get("email")
     user_id = data.get("user_id")
+    password = data.get("password")
+    contact = data.get("contact")
+    firstname = data.get("firstname")
+    middlename = data.get("middlename")
+    lastname = data.get("lastname")
+    address = data.get("address")
 
-    #Check for existing user id
-    new_user_id = Users.query.filter_by(user_id = user_id).first()
+    # Check for existing user ID
+    new_user_id = Users.query.filter_by(user_id=user_id).first()
     if new_user_id:
-        return jsonify({"error": "User id already exist!"}), 400
+        return jsonify({"error": "User ID already exists!"}), 400
+
+    # Validate user id
+    error = validate_user_id(user_id)
+    if error:
+        return error
+    
+    # Validate Names
+    names = {
+        "Firstname": firstname,
+        "Lastname": lastname,
+    }
+    if middlename:  # Only validate if middlename is provided
+        names["Middlename"] = middlename
+    for name_type, name_value in names.items():
+        if not re.match(r"^[A-Za-z\s.]+$", name_value):
+            return jsonify({"error": f"{name_type} must not contain special characters."}), 400
+    
     # Check for existing email
     existing_user = Users.query.filter_by(email=email).first()
     if existing_user:
         return jsonify({"error": "Email already exists!"}), 400
+    
+    # Validate contact number
+    if not re.match(r"^09\d{9}$", contact):
+        return jsonify({"error": "Contact number is invalid. Try again!"}), 400
+
+    # Validate address
+    if not re.match(r"^[A-Za-z0-9\s,.-]+$", address):
+        return jsonify({"error": "Address must contain only letters, numbers, spaces, and basic punctuation."}), 400
+    
+    # Validate password
+    error = validate_password(password)
+    if error:
+        return error
 
     # Create new user
     user = Users(
-        user_id=data.get("user_id"),
-        firstname=data.get("firstname"),
-        middlename=data.get("middlename"),
-        lastname=data.get("lastname"),
+        user_id=user_id,
+        firstname=firstname,
+        middlename=middlename,
+        lastname=lastname,
         email=email,
-        password=generate_password_hash(data.get("password")),
-        contact=data.get("contact"),
-        address=data.get("address"),
+        password=password,
+        contact=contact,
+        address=address,
         role=data.get("role"),
         status=data.get("status"),
     )
@@ -65,7 +132,9 @@ def create_users():
         return jsonify({"message": "User created successfully"}), 201
     except Exception as e:
         db.session.rollback()
+        print(f"Error while creating user: {e}")  # Log the error for debugging
         return jsonify({"error": "An error occurred while creating the user"}), 500
+
 
 
 @user_routes.route("/get_users", methods=["GET"])
@@ -201,8 +270,6 @@ def delete_user(id):
     except Exception as e:
         db.session.rollback()
         return jsonify({"error": "An error occurred while deleting the user!"}), 500
-
-
 # UPDATE USER
 @user_routes.route("/update_user/<id>", methods=["PUT"])
 def update_user(id):
@@ -210,18 +277,32 @@ def update_user(id):
     if not user:
         return jsonify({"error": "User not found"}), 404
 
-    data = request.json
+    data = request.get_json()  # Corrected this line by adding parentheses
+    user_id = data.get("user_id")
+    newPassword = data.get("newPassword")
+    
+    # Validate user ID
+    error = validate_user_id(user_id)
+    if error:
+        return error
 
+    # Check if newPassword is provided and not empty
+    if newPassword:  # Only proceed if the field is not empty
+        print("New password provided: Validating...")
+        error = validate_password(newPassword)
+        if error:
+            return error
+        # If the password is valid, hash and update it
+        user.password = generate_password_hash(newPassword)  # Hash and update the password
+    else:
+        print("Password not updated as newPassword is empty or not provided.")
+    
     # Check for email uniqueness only if the email has changed
     if "email" in data and data["email"] != user.email:
         existing_user = Users.query.filter_by(email=data["email"]).first()
         if existing_user:
             return jsonify({"error": "Email already in use!"}), 400
         user.email = data["email"]
-
-    # Handle password update if provided
-    if "newPassword" in data:
-        user.password = generate_password_hash(data["newPassword"])
 
     # Update other fields
     user.user_id = data.get("user_id", user.user_id)
@@ -238,20 +319,27 @@ def update_user(id):
         return jsonify({"message": "User updated successfully"}), 200
     except Exception as e:
         db.session.rollback()
+        print(f"Error during commit: {e}")
         return jsonify({"error": "An error occurred while updating the user"}), 500
+
 
 
 # LOGIN USER
 @user_routes.route("/signIn", methods=["POST"])
 def user_login():
-    data = request.json
+    data = request.get_json()
+    # Check if email and password are provided
     email = data.get("email")
     password = data.get("password")
+    
+    if not email or not password:
+        return jsonify({"error": "Email and password are required"}), 400
 
+    # Query the user by email
     user = Users.query.filter_by(email=email).first()
     if not user:
-        return jsonify({"error": "Invalid email or password"}), 401
-
+        return jsonify({"error": "Invalid email! Make sure you have an account."}), 401
+    
     # Check if the account is deactivated
     if user.status == "Deactivated":
         return (
@@ -259,23 +347,29 @@ def user_login():
             403,
         )
 
-    if user and check_password_hash(user.password, password):
-        # Generate JWT token
-        token = jwt.encode(
-            {
-                "id": user.id,
-                "firstname": user.firstname,
-                "lastname": user.lastname,
-                "email": user.email,
-                "role": user.role,
-                "exp": datetime.utcnow()
-                + timedelta(hours=1),  # Token expires in 1 hour
-            },
-            secret_key,
-            algorithm="HS256",
-        )
+    # Verify password
+    if not check_password_hash(user.password, password):
+        return jsonify({"error":"Password is incorrect"}), 401
 
-        return jsonify({"message": "Login successful", "token": token}), 200
+    if check_password_hash(user.password, password):
+        # Generate JWT token
+        try:
+            token = jwt.encode(
+                {
+                    "id": user.id,
+                    "firstname": user.firstname,
+                    "lastname": user.lastname,
+                    "email": user.email,
+                    "role": user.role,
+                    "exp": datetime.utcnow() + timedelta(hours=1),
+                },
+                secret_key,
+                algorithm="HS256",
+            )
+
+            return jsonify({"message": "Login successful", "token": token}), 200
+        except Exception as e:
+            return jsonify({"error": "Token generation failed", "details": str(e)}), 500
     else:
         return jsonify({"error": "Invalid credentials"}), 401
 

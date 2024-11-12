@@ -6,8 +6,11 @@ import "../css/SideNavbar.css";
 import ToastNotification from "../ToastNotification";
 import LogoutModal from "../LogoutModal";
 import SideNavbar from "../SideNavbar";
-
+import AOS from "aos";
 const AccountManagement = () => {
+  useEffect(()=>{
+    AOS.init({duration:500, easing:"ease-in-out", once:false})
+  },[])
   const [users, setUsers] = useState([]);
   const [filteredUsers, setFilteredUsers] = useState([]);
   const [searchQuery, setSearchQuery] = useState("");
@@ -73,6 +76,7 @@ const AccountManagement = () => {
       setContact("");
       setAddress("");
       setPassword("");
+      fetchUsers();
       setTimeout(() => {
         setShowMessage(false);
         setSuccess(null);
@@ -116,7 +120,6 @@ const AccountManagement = () => {
   // To Delete User
   const handleSelectedUser = (user) => {
     setSelected(user);
-    console.log("Deactivating user:", user.id);
   };
   // To Delete User
   const handleDelete = async (userID) => {
@@ -176,14 +179,18 @@ const AccountManagement = () => {
       setSuccess(response.data.message);
       setSelected(null);
       fetchUsers();
+      // Trigger the modal close by simulating the dismiss action
+      const closeButton = document.querySelector('[data-bs-dismiss="modal"]');
+      if (closeButton) {
+        closeButton.click(); // Simulate the dismiss button click
+      }
       setTimeout(() => {
         setShowMessage(false);
         setSuccess(null);
       }, 3000);
-    } catch (error) {
+    } catch (err) {
       setShowMessage(true);
-      setError(error.response?.data?.error);
-      setSelected(null);
+      setError(err.response?.data?.error);
       setTimeout(() => {
         setShowMessage(false);
         setError(null);
@@ -329,7 +336,7 @@ const AccountManagement = () => {
               aria-labelledby="staticBackdropLabel"
               aria-hidden="true"
             >
-              <div className="modal-dialog">
+              <div className="modal-dialog modal-dialog-centered">
                 <div className="modal-content">
                   <div className="modal-header">
                     <div className="d-flex align-items-center justify-content-center">
@@ -480,7 +487,7 @@ const AccountManagement = () => {
                           >
                             <i
                               className={`bi ${
-                                isPasswordVisible ? "bi-eye-slash" : "bi-eye"
+                                isPasswordVisible ? "bi-eye" : "bi-eye-slash"
                               }`}
                             ></i>
                           </button>
@@ -491,15 +498,16 @@ const AccountManagement = () => {
                             className="btn btn-secondary"
                             data-bs-dismiss="modal"
                           >
+                            <i className="bi bi-x me-2"></i>
                             Cancel
                           </button>
                           <button
                             type="button"
                             onClick={() => handleEdit(selected.id)}
                             className="btn btn-success"
-                            data-bs-dismiss="modal"
                           >
-                            Update
+                            <i className="bi bi-check me-2"></i>
+                            Yes, Update
                           </button>
                         </div>
                       </form>
@@ -605,7 +613,7 @@ const AccountManagement = () => {
                       </div>
                       <div className="input-group mb-3">
                         <input
-                          type="password"
+                          type={isPasswordVisible ? "text" : "password"} // Toggle between 'text' and 'password'
                           className="form-control fs-6"
                           name="password"
                           value={password}
@@ -613,6 +621,18 @@ const AccountManagement = () => {
                           placeholder="Password"
                           required
                         />
+                        <button
+                          type="button"
+                          className="input-group-text"
+                          onClick={togglePasswordVisibility}
+                          style={{ cursor: "pointer" }}
+                        >
+                          <i
+                            className={`bi ${
+                              isPasswordVisible ? "bi-eye" : "bi-eye-slash"
+                            }`}
+                          ></i>
+                        </button>
                       </div>
                       <div className="form-group mb-3">
                         <label htmlFor="role">Role</label>
@@ -737,28 +757,39 @@ const AccountManagement = () => {
               <div className="modal-dialog">
                 <div className="modal-content">
                   <div
-                    className={`modal-header border-bottom-0 text-white align-items-center justify-content-center ${selected ? (
-                      selected.status == "Active" ? "bg-orange" :"bg-success"
-                    ):(<i>No user</i>)}`}                     
-                    
+                    className={`modal-header border-bottom-0 text-white align-items-center justify-content-center ${
+                      selected ? (
+                        selected.status == "Active" ? (
+                          "bg-orange"
+                        ) : (
+                          "bg-success"
+                        )
+                      ) : (
+                        <i>No user</i>
+                      )
+                    }`}
                   >
                     <div className=" align-items-center justify-content-center">
-                        {selected ? (
-                      <h4 className="fw-medium mt-2">
-                        {selected.status == "Active"
-                          ? "Deactivate Confirmation"
-                          : "Activate Confirmation"}
-                      </h4>
-                        ):(
-                          <i>No user</i>
-                        )}
+                      {selected ? (
+                        <h4 className="fw-medium mt-2">
+                          {selected.status == "Active"
+                            ? "Deactivate Confirmation"
+                            : "Activate Confirmation"}
+                        </h4>
+                      ) : (
+                        <i>No user</i>
+                      )}
                     </div>
                   </div>
                   {selected ? (
                     <div className="modal-body">
                       <div className="text-center">
                         <p
-                          className={`bi bi-exclamation-circle ${selected.status == "Active" ?"font-orange":"text-success"}`}
+                          className={`bi bi-exclamation-circle ${
+                            selected.status == "Active"
+                              ? "font-orange"
+                              : "text-success"
+                          }`}
                           style={{ fontSize: "3rem" }}
                         ></p>
                         <p className="fw-semibold">
@@ -804,7 +835,11 @@ const AccountManagement = () => {
                         {selected.status == "Active" ? (
                           <button
                             onClick={() => handleDeactivate(selected.id)}
-                            className={`btn ${selected.status == "Active" ?"btn-orange":"btn-success"}`}
+                            className={`btn ${
+                              selected.status == "Active"
+                                ? "btn-orange"
+                                : "btn-success"
+                            }`}
                             data-bs-dismiss="modal"
                           >
                             <i className="bi bi-check me-2"></i>
@@ -813,7 +848,11 @@ const AccountManagement = () => {
                         ) : (
                           <button
                             onClick={() => handleActivate(selected.id)}
-                            className={`btn ${selected.status == "Active" ?"btn-orange":"btn-success"}`}
+                            className={`btn ${
+                              selected.status == "Active"
+                                ? "btn-orange"
+                                : "btn-success"
+                            }`}
                             data-bs-dismiss="modal"
                           >
                             <i className="bi bi-check me-2"></i>

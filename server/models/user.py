@@ -26,22 +26,7 @@ class Users(db.Model):
 
     def __init__(self, user_id, firstname, middlename, lastname, email, 
                  password, contact, address, role, status="Active"):  # Default status
-        # Validate contact number
-        if not re.match(r"^09\d{9}$", contact):
-            raise ValueError("Contact number is invalid. Try again!")
-
-        # Validate names
-        if not re.match(r"^[A-Za-z\s]+$", firstname):
-            raise ValueError("Firstname must not contain special characters.")
-        if not re.match(r"^[A-Za-z\s.]+$", lastname):
-            raise ValueError("Lastname must not contain special characters.")
-
-        # Validate address
-        if not re.match(r"^[A-Za-z0-9\s,.-]+$", address):
-            raise ValueError(
-                "Address must contain only letters, numbers, spaces, and basic punctuation."
-            )
-
+    
         self.user_id = user_id
         self.firstname = firstname
         self.middlename = middlename
