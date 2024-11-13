@@ -10,6 +10,9 @@ ENV/
 
 # Flask instance folder
 instance/
+counting_stream/
+hls/
+stream/
 
 # Python egg files
 *.egg

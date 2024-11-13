@@ -239,6 +239,7 @@ const TrafficLight = ({ groupedByDay, road, api, trafficLightSettings }) => {
       hls.current.on(Hls.Events.MANIFEST_PARSED, () => {
         videoRef.current.play();
       });
+      console.log("videoRef.current: ", videoRef.current);
 
       hls.current.on(Hls.Events.ERROR, (event, data) => {
         if (data.fatal) {

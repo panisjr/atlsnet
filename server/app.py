@@ -9,7 +9,8 @@ def create_app():
     CORS(app, origins="*")
 
     # Initialize database
-    app.config["SQLALCHEMY_DATABASE_URI"] = "postgresql://postgres:atlsnet-postgres@atlsnet-postgres.cnoq2uo0erkf.ap-southeast-2.rds.amazonaws.com:5432/atlsnetdb"
+    # app.config["SQLALCHEMY_DATABASE_URI"] = "postgresql://postgres:atlsnet-postgres@atlsnet-postgres.cnoq2uo0erkf.ap-southeast-2.rds.amazonaws.com:5432/atlsnetdb"
+    app.config["SQLALCHEMY_DATABASE_URI"] = "postgresql://postgres:postgres@localhost/atls"
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
     # Initialize the database with the app

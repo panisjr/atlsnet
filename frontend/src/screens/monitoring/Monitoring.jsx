@@ -5,6 +5,7 @@ import TrafficLight from "./TrafficLight";
 import LogoutModal from "../LogoutModal";
 import SideNavbar from "../SideNavbar";
 import "./Monitoring.css";
+import CommandCenter from "./CommandCenter";
 // Get current day as a string, e.g., "Monday"
 const getCurrentDay = () => {
   return new Date().toLocaleDateString("en-US", { weekday: "long" });
@@ -307,6 +308,7 @@ const Monitoring = () => {
                 <span className="text-secondary">Pages</span> / Monitoring
               </h6>
             <div className="row monitoringContainer">
+              <CommandCenter/>
               {/* Lane selection and upload section */}
               <div className="d-flex align-items-center justify-content-center">
                 <select

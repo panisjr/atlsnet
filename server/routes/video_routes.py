@@ -1,6 +1,7 @@
 from flask import Blueprint, request, jsonify, send_file, send_from_directory
 import os
 import cv2
+import re
 from ultralytics import YOLO
 from ultralytics.solutions.object_counter import ObjectCounter
 from models import *  # Ensure you import your Video model correctly
@@ -18,17 +19,27 @@ video_routes = Blueprint("video_routes", __name__)
 # Initialize YOLO model
 model = YOLO("best.pt")
 
-# Define the upload folder
-UPLOAD_FOLDER = os.path.join(os.getcwd(), 'static', 'Videos')
 # Configuration for the RTSP stream
 # RTSP_URL = "rtsp://c200North:c200North@192.168.153.165:554/stream1"  # Replace with your RTSP URL
 STREAM_DIR = "stream"
 M3U8_PATH = os.path.join(STREAM_DIR, "stream.m3u8")
 os.makedirs(STREAM_DIR, exist_ok=True)
 
+# Define the upload folder
+UPLOAD_FOLDER = os.path.join(os.getcwd(), 'static', 'Videos')
 # Create the upload folder if it doesn't exist
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 os.makedirs('counting_stream', exist_ok=True)
+
+def format_videos(video):
+    return {
+        "id": video.id,
+        "intersection_id": video.intersection_id,
+        "in_counts": video.in_counts,
+        "out_counts": video.out_counts,
+        "filename": f"{request.host_url}static/Videos/{video.filename}",
+        "created_at": video.created_at,
+    }
 
 def start_streaming(rtsp_url):
     """Starts the HLS stream and saves a separate AVI file for object counting."""
@@ -137,7 +148,21 @@ def process_video_segment():
         os.remove(latest_file_path)
 
 counting_thread = None  # Initialize counting thread
-    
+
+@video_routes.route("/start_hls/<int:camera_id>", methods=["POST"])
+def start_hls(camera_id):
+    camera = Camera.query.filter_by(id=camera_id).one_or_none()
+    if camera and camera.status:
+        print("Camera name: " , camera.name)
+        print("Camera id:", camera.id)
+        rtsp_url = camera.rtsp_url
+        print("Camera rtsp url:", rtsp_url)
+        """Start the HLS streaming process."""  
+        thread = Thread(target=start_streaming, args=(rtsp_url,))  # Run HLS in a separate thread
+        thread.start()
+        return jsonify({'message': 'HLS stream started', 'rtsp_url': rtsp_url}), 200
+    else:
+        return jsonify({'message': 'Camera not found or inactive'}), 404
 @video_routes.route("/start_counting/<int:camera_id>", methods=["POST"])
 def start_counting(camera_id):
     camera = Camera.query.get(camera_id)
@@ -155,20 +180,7 @@ def start_counting(camera_id):
     else:
         return jsonify({'message': 'Camera not found or inactive'}), 404
  
-@video_routes.route("/start_hls/<int:camera_id>", methods=["POST"])
-def start_hls(camera_id):
-    camera = Camera.query.filter_by(id=camera_id).one_or_none()
-    if camera and camera.status:
-        print("Camera name: " , camera.name)
-        print("Camera id:", camera.id)
-        rtsp_url = camera.rtsp_url
-        print("Camera rtsp url:", rtsp_url)
-        """Start the HLS streaming process."""  
-        thread = Thread(target=start_streaming, args=(rtsp_url,))  # Run HLS in a separate thread
-        thread.start()
-        return jsonify({'message': 'HLS stream started', 'rtsp_url': rtsp_url}), 200
-    else:
-        return jsonify({'message': 'Camera not found or inactive'}), 404
+
 # Route to serve the HLS playlist
 @video_routes.route('/stream.m3u8')
 def stream_playlist():
@@ -184,46 +196,6 @@ def stream_segment(filename):
 @socketio.on("connect")
 def handle_connect():
     print("Client connected")
-
-@video_routes.route("/add_camera", methods=["POST"])
-def add_camera():
-    data = request.get_json()
-
-    if not data:
-        return jsonify({"error": "No data provided!"}), 400
-    
-    name = data.get("name")
-    rtsp_url = data.get("rtsp_url")
-    location = data.get("location", "")
-
-    if not name or not rtsp_url:
-        return jsonify({"error": "Name and RTSP URL are required!"}), 400
-    
-    new_camera = Camera(name=name, rtsp_url=rtsp_url, location=location)
-    db.session.add(new_camera)
-    db.session.commit()
-    
-    return jsonify({"message": "Camera added successfully!"})
-
-def format_cameras(camera):
-    return {
-        "id": camera.id,
-        "name": camera.name,
-        "rtsp_url": camera.rtsp_url,
-        "location": camera.location,
-        "status": camera.status,
-        "created_at": camera.created_at,
-    }
-
-def format_videos(video):
-    return {
-        "id": video.id,
-        "intersection_id": video.intersection_id,
-        "in_counts": video.in_counts,
-        "out_counts": video.out_counts,
-        "filename": f"{request.host_url}static/Videos/{video.filename}",
-        "created_at": video.created_at,
-    }
 
 # Route to process uploaded video file
 @video_routes.route("/video_feed", methods=["POST"])
@@ -415,31 +387,3 @@ def delete_video(video_id):
     except Exception as e:
         return jsonify({"error": "Error deleting video!"}), 500
 
-@video_routes.route("/get_cameras", methods=["GET"])
-def get_camera():
-    try:
-        cameras = Camera.query.order_by(Camera.id.asc()).all()
-        cameras_url = [format_cameras(camera) for camera in cameras]
-        return jsonify(cameras_url), 200
-    except Exception as e:
-        return jsonify({"error": "Error occurred when getting cameras"}), 500
-
-# DELETE CAMERA
-@video_routes.route('/delete_camera/<int:camera_id>', methods=['DELETE'])
-def delete_camera(camera_id):
-    token = request.headers.get("Authorization")
-    if not token:
-        return jsonify({"error": "Unauthorized! Token is missing!"}), 401
-    try:
-        # Find the camera by ID
-        camera = Camera.query.get(camera_id)
-        if camera is None:
-            return jsonify({"error": "Camera not found!"}), 404
-
-        # Remove the camera record from the database
-        db.session.delete(camera)
-        db.session.commit()
-
-        return jsonify({"message": "Camera deleted successfully!"}), 200
-    except Exception as e:
-        return jsonify({"error": "Error deleting camera!"}), 500

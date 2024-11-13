@@ -26,8 +26,9 @@ const DynamicTrafficLights = ({
               <div className="video-container mt-3">
                 <video
                   ref={videoRef}
+                  autoPlay
                   controls
-s                  muted
+                  muted
                   style={{ width: "100%", maxHeight: "300px" }}
                 ></video>
               </div>

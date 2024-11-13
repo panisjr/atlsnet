@@ -4,7 +4,6 @@ body {
 .weekPlanContainer {
   height: 100%;
   margin-bottom: 1rem; /* Space below the table */
-  border: 1px solid #ddd; /* Optional: Add border for visual separation */
   overflow-y: auto;
   }
 .weekPlan-button {
@@ -44,11 +43,56 @@ body {
   padding: 10px;
 }
 /* ============== ADD INTERSECTION FORM ================ */
-.add-intersection-form{
+.add-intersection-container{
+  margin-right: 5px;
+  margin-bottom: 1rem;
+  display: flex;
+  align-items: start;
+  justify-content: center;
   background-color: white;
-  width: 24%;
   border-radius: 5px;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
   border: 1px solid rgb(216, 214, 214);
   padding: 20px;
+}
+.add-intersection-form{
+  background-color: #dfdfdf;
+  border-radius: 5px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  border: 1px solid rgb(216, 214, 214);
+  padding: 20px;
+}
+.intersection-table{
+  max-height:510px; /* Adjust height to fit your needs */
+  overflow-y: auto;
+  overflow-x: hidden; /* Hide horizontal scroll */
+  background-color: white;
+  border-radius: 5px;
+}
+.camera-container{
+  margin-right: 5px;
+  display: flex;
+  align-items: start;
+  justify-content: center;
+  background-color: white;
+  border-radius: 5px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  border: 1px solid rgb(216, 214, 214);
+  padding: 20px;
+}
+.add-camera-form{
+  height: 300px;
+  background-color: #dfdfdf;
+  border-radius: 5px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  border: 1px solid rgb(216, 214, 214);
+  padding: 20px;
+  margin-bottom: 10px;
+}
+.camera-table{
+  max-height:540px; /* Adjust height to fit your needs */
+  overflow-y: auto;
+  overflow-x: hidden; /* Hide horizontal scroll */
+  background-color: white;
+  border-radius: 5px;
 }

@@ -12,6 +12,7 @@ class Camera(db.Model):
     location = db.Column(db.String(100), nullable=True)
     status = db.Column(db.Text, nullable=False, default="Active")
     created_at = db.Column(db.DateTime,nullable=False, default=datetime.now())
+    modified_at = db.Column(db.DateTime,nullable=False, default=datetime.now())
 
     # intersection = db.relationship('Intersection', backref='cameras', lazy=True)
     def __init__(self, name, rtsp_url, location=None):

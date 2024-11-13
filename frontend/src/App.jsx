@@ -14,6 +14,7 @@ import ProtectedRoute from "./ProtectedRoute";
 import Dashboard from "./screens/dashboard/Dashboard";
 import SignIn from "./screens/landingSignIn/SignIn";
 import LandingPage from "./screens/landingSignIn/LandinPage";
+import CommandCenter from "./screens/monitoring/CommandCenter";
 function App() {
   return (
     <BrowserRouter>
@@ -63,7 +64,7 @@ function App() {
         {/* <Route path="/footage" element={<Footage />} /> */}
         <Route path="/realtime" element={<RealTime />} />
         <Route path="/testing" element={<Testing />} />
-        {/* <Route path="/accounts" element={<AccountManagement />} /> */}
+        <Route path="/commandCenter" element={<CommandCenter />} />
       </Routes>
     </BrowserRouter>
   );

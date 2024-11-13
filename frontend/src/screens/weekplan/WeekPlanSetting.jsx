@@ -7,6 +7,7 @@ import LogoutModal from "../LogoutModal";
 import "./WeekPlanSetting.css";
 import SideNavbar from "../SideNavbar";
 import CameraManager from "../monitoring/CameraManager";
+import IntersectionModals from "./IntersectionModals";
 const WeekPlanSetting = () => {
   const api = "http://localhost:5000";
   // Search bar
@@ -307,6 +308,49 @@ const WeekPlanSetting = () => {
     setSelected(null);
     setSelectedWeekPlan(road);
   };
+  const [found, setFound] = useState(null); // Initialize as null
+  const [mode, setMode] = useState(null);
+  const handleSelectedCamera = (id, item) => {
+    const camera = cameras.find((cam) => cam.id === id);
+    if (camera) {
+      if (item === "edit") {
+        setMode("edit");
+        setFound(camera);
+        setName(camera.name || "");
+        setLocation(camera.location || "");
+        // Parse the RTSP URL
+        const rtspRegex = /rtsp:\/\/(.*?):(.*?)@(.*?):(\d+)\/(.*)/;
+        const match = camera.rtsp_url.match(rtspRegex);
+
+        if (match) {
+          const [, user, pass, ip, port, streamPath] = match;
+
+          // Set state variables for editing
+          setUsername(user || "");
+          setPassword(pass || "");
+          setCameraIP(ip || "");
+          setPort(port || "");
+          setStream(streamPath || "");
+        }
+      }
+
+      if (item === "delete") {
+        setFound(camera); // Set the found camera
+        setMode("delete");
+      }
+    }
+    setSelected(null); // Reset selected (if needed)
+  };
+  const clearCameraForm = () => {
+    setMode(null);
+    setName("");
+    setLocation("");
+    setUsername("");
+    setPassword("");
+    setCameraIP("");
+    setPort("");
+    setStream("");
+  };
   const logout = () => {
     sessionStorage.clear();
     navigate("/");
@@ -513,18 +557,48 @@ const WeekPlanSetting = () => {
   // =========================== Start of Camera
   const [cameras, setCameras] = useState([]);
   const fetchCameras = async () => {
-    const response = await axios.get(`${api}/videos/get_cameras`);
+    const response = await axios.get(`${api}/intersections/get_cameras`);
     setCameras(response.data);
+  };
+  const addCamera = async () => {
+    try {
+      const rtsp_url = `rtsp://${username}:${password}@${camera_ip}:${port}/${stream}`;
+      const response = await axios.post(`${api}/intersections/add_camera`, {
+        name: name,
+        rtsp_url: rtsp_url,
+        location: location,
+      });
+      clearCameraForm();
+      fetchCameras();
+      setShowMessage(true);
+      setSuccess(response.data.message);
+      setTimeout(() => {
+        setShowMessage(false);
+        setSuccess(null);
+      }, 3000);
+    } catch (error) {
+      setShowMessage(true);
+      setError(error.response?.data?.error);
+      setTimeout(() => {
+        setShowMessage(false);
+        setError(null);
+      }, 3000);
+    }
   };
   const deleteCamera = async (id) => {
     try {
       const token = sessionStorage.getItem("token");
-      const response = await axios.delete(`${api}/videos/delete_camera/${id}`, {
-        headers: {
-          Authorization: `${token}`, // Ensure the token is prefixed with "Bearer " if your backend expects it
-        },
-      });
+      const response = await axios.delete(
+        `${api}/intersections/delete_camera/${id}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`, // Ensure the token is prefixed with "Bearer " if your backend expects it
+          },
+        }
+      );
       setShowMessage(true);
+      fetchCameras();
+      clearCameraForm()
       setSuccess(response.data.message);
       setTimeout(() => {
         setShowMessage(false);
@@ -540,21 +614,26 @@ const WeekPlanSetting = () => {
       }, 3000);
     }
   };
-  const addCamera = async () => {
+  const editCamera = async (id) => {
+    console.log("id: ",id);
     try {
       const rtsp_url = `rtsp://${username}:${password}@${camera_ip}:${port}/${stream}`;
-      console.log("RTSP URL:", rtsp_url); // This will show your RTSP URL in the console for verification
-
-      const response = await axios.post(
-        `${api}/trafficLight/add_camera`,
-
+      const token = sessionStorage.getItem("token");
+      const response = await axios.put(
+        `${api}/intersections/edit_camera/${id}`,
         {
-          name: name,
-          rtsp_url: rtsp_url,
-          location: location,
+          name,
+          location,
+          rtsp_url, // Pass the full RTSP URL
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
         }
       );
-      clearForm();
+      fetchCameras();
+      clearCameraForm();
       setShowMessage(true);
       setSuccess(response.data.message);
       setTimeout(() => {
@@ -563,7 +642,7 @@ const WeekPlanSetting = () => {
       }, 3000);
     } catch (error) {
       setShowMessage(true);
-      setError(error.response?.data?.error);
+      setError(error.reponse?.data?.error);
       setTimeout(() => {
         setShowMessage(false);
         setError(null);
@@ -571,13 +650,6 @@ const WeekPlanSetting = () => {
     }
   };
   const clearForm = () => {
-    setName("");
-    setUsername("");
-    setPassword("");
-    setCameraIP("");
-    setPort("");
-    setStream(""); // Reset to default stream path
-    setLocation("");
     setSelectedCameraId("");
     setSelectedIntersection("");
     setSelectedCameraId("");
@@ -614,8 +686,8 @@ const WeekPlanSetting = () => {
             <h6 className="p-3">
               <span className="text-secondary">Pages</span> / Week Plan
             </h6>
-            <div class="row weekPlanContainer">
-              <div className="d-flex align-items-center justify-content-between mt-3">
+            <div class="row weekPlanContainer p-2">
+              <div className="d-flex align-items-center justify-content-between">
                 <div
                   class="weekplan-button-container nav nav-pills"
                   id="v-pills-tab"
@@ -624,32 +696,32 @@ const WeekPlanSetting = () => {
                 >
                   <p
                     class="weekPlan-button active"
-                    id="v-pills-home-tab"
+                    id="v-pills-intersection-tab"
                     data-bs-toggle="pill"
-                    data-bs-target="#v-pills-home"
+                    data-bs-target="#v-pills-intersection"
                     type="button"
                     role="tab"
-                    aria-controls="v-pills-home"
+                    aria-controls="v-pills-intersection"
                     aria-selected="true"
-                  >
-                    Week Plan Setting
-                  </p>
-                  <p
-                    class="weekPlan-button"
-                    id="v-pills-profile-tab"
-                    data-bs-toggle="pill"
-                    data-bs-target="#v-pills-profile"
-                    type="button"
-                    role="tab"
-                    aria-controls="v-pills-profile"
-                    aria-selected="false"
                   >
                     Intersection Setting
                   </p>
+                  <p
+                    class="weekPlan-button"
+                    id="v-pills-weekPlan-tab"
+                    data-bs-toggle="pill"
+                    data-bs-target="#v-pills-weekPlan"
+                    type="button"
+                    role="tab"
+                    aria-controls="v-pills-weekPlan"
+                    aria-selected="false"
+                  >
+                    Week Plan Setting
+                  </p>
                 </div>
-                <div>
+                <div className="d-flex">
                   <button
-                    class="btn btn-dark"
+                    className="btn btn-dark me-3"
                     data-bs-toggle="modal"
                     data-bs-target="#addIntersectionBackdrop"
                   >
@@ -667,12 +739,282 @@ const WeekPlanSetting = () => {
               </div>
               {/* Side Bar */}
               <div class="tab-content pt-4 vw-100" id="v-pills-tabContent">
-                {/* Week Plan Tab */}
+                {/* Intersection Tab */}
                 <div
                   class="tab-pane fade show active"
-                  id="v-pills-home"
+                  id="v-pills-intersection"
                   role="tabpanel"
-                  aria-labelledby="v-pills-home-tab"
+                  aria-labelledby="v-pills-intersection-tab"
+                  tabindex="0"
+                >
+                  <div className="add-intersection-container row">
+                    <div className="col-4 add-intersection-form">
+                      <form onSubmit={handleAddIntersection}>
+                        <div>
+                          <label
+                            className="fw-semibold mb-3"
+                            htmlFor="newIntersection"
+                          >
+                            Add new intersection
+                          </label>
+                          <input
+                            type="text"
+                            className="form-control mb-2"
+                            id="newIntersection"
+                            value={newIntersection}
+                            onChange={(e) => setNewIntersection(e.target.value)}
+                            placeholder="Enter new intersection"
+                            required
+                          />
+                        </div>
+                        <button type="submit" className=" btn btn-success">
+                          Add Intersection
+                        </button>
+                      </form>
+                    </div>
+                    <div className="col-8 intersection-table ">
+                      <table className="table table-bordered table-striped">
+                        <thead>
+                          <th>No.</th>
+                          <th>Intersection</th>
+                          <th></th>
+                        </thead>
+                        <tbody>
+                          {intersection ? (
+                            intersection.map((intersection, i) => (
+                              <tr key={i}>
+                                <td>{i + 1}</td>
+                                <td>{intersection.intersection_name}</td>
+                                <td className="d-flex align-items-center">
+                                  <h5
+                                    className="bi bi-pencil btn btn-outline-warning me-2"
+                                    data-bs-toggle="modal"
+                                    data-bs-target="#editBackdrop"
+                                    onClick={() =>
+                                      handleSelectedIntersection(intersection)
+                                    }
+                                  ></h5>
+                                  <h5
+                                    className="bi bi-trash btn btn-danger"
+                                    data-bs-toggle="modal"
+                                    data-bs-target="#deleteBackdrop"
+                                    onClick={() =>
+                                      handleSelectedIntersection(intersection)
+                                    }
+                                  ></h5>
+                                </td>
+                              </tr>
+                            ))
+                          ) : (
+                            <i>No intersection</i>
+                          )}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                  <div className="camera-container row">
+                    <div className="add-camera-form">
+                      <form>
+                        <p className="fw-semibold">Add RTSP URL</p>
+                        {/* Custom Camera Name and Location */}
+                        <div className="d-flex justify-content-around mb-2">
+                          <div className="col-md-6 form-floating">
+                            <input
+                              required
+                              className="form-control form-control-sm"
+                              type="text"
+                              name="name"
+                              id="cameraName"
+                              value={name}
+                              onChange={(e) => setName(e.target.value)}
+                              placeholder="Name"
+                            />
+                            <label for="cameraName">
+                              {" "}
+                              <i>Custom Camera Name</i>
+                            </label>
+                          </div>
+                          <div className="col-md-6 form-floating">
+                            <input
+                              required
+                              className="form-control form-control-sm"
+                              id="location"
+                              type="text"
+                              name="location"
+                              value={location}
+                              onChange={(e) => setLocation(e.target.value)}
+                              placeholder="Location Intersection"
+                            />
+                            <label htmlFor="location">
+                              <i>Location</i>
+                            </label>
+                          </div>
+                        </div>
+                        {/* Username , Password, Camera IP, Stream Name, Port*/}
+                        <div className="d-flex justify-content-around mb-2">
+                          <div className="col-md-3 form-floating">
+                            <input
+                              className="form-control form-control-sm"
+                              required
+                              type="text"
+                              id="username"
+                              name="username"
+                              value={username}
+                              onChange={(e) => setUsername(e.target.value)}
+                              placeholder="Username"
+                            />
+                            <label for="username">
+                              <i>Username</i>
+                            </label>
+                          </div>
+                          <div className="col-md-3 form-floating">
+                            <input
+                              className="form-control form-control-sm"
+                              required
+                              id="password"
+                              type="text"
+                              name="password"
+                              value={password}
+                              onChange={(e) => setPassword(e.target.value)}
+                              placeholder="Password"
+                            />
+                            <label for="password">
+                              <i>Password</i>
+                            </label>
+                          </div>
+                          <div className="col-md-2 form-floating">
+                            <input
+                              className="form-control form-control-sm"
+                              required
+                              id="camera_ip"
+                              type="text"
+                              name="camera_ip"
+                              value={camera_ip}
+                              onChange={(e) => setCameraIP(e.target.value)}
+                              placeholder="Camera IP(192.168.100.25)"
+                            />
+                            <label for="camera_ip">
+                              <i>Camera IP</i>
+                            </label>
+                          </div>
+                          <div className="col-md-2 form-floating">
+                            <input
+                              className="form-control form-control-sm"
+                              required
+                              id="port"
+                              type="text"
+                              name="port"
+                              value={port}
+                              onChange={(e) => setPort(e.target.value)}
+                              placeholder="Port(554)"
+                            />
+                            <label for="port">
+                              <i>Port</i>
+                            </label>
+                          </div>
+                          <div className="col-md-2 form-floating">
+                            <input
+                              className="form-control form-control-sm"
+                              required
+                              id="stream"
+                              type="text"
+                              name="stream"
+                              value={stream}
+                              onChange={(e) => setStream(e.target.value)}
+                              placeholder="Stream Name (stream1)"
+                            />
+                            <label for="stream">
+                              <i>Stream Path</i>
+                            </label>
+                          </div>
+                        </div>
+                        {mode === "edit" ? (
+                          <div>
+                            <button
+                              type="button"
+                              onClick={clearCameraForm}
+                              className="btn btn-secondary me-2"
+                            >
+                              <i className="bi bi-x me-2"></i>
+                              Cancel
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => editCamera(found.id)} // Wrap the function call in an arrow function
+                              className="btn btn-success"
+                            >
+                              <i className="bi bi-check me-2"></i>
+                              Edit Camera
+                            </button>
+                          </div>
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={addCamera}
+                            className="btn btn-success"
+                          >
+                            Add Camera
+                          </button>
+                        )}
+                      </form>
+                    </div>
+                    <div className="camera-table">
+                      <table className="table table-bordered table-striped">
+                        <thead>
+                          <tr>
+                            <th>ID</th>
+                            <th>Camera Name</th>
+                            <th>Location</th>
+                            <th>RTSP URL</th>
+                            <th>Status</th>
+                            <th></th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {cameras && cameras.length > 0 ? (
+                            cameras.map((camera) => (
+                              <tr key={camera.id}>
+                                <td>{camera.id}</td>
+                                <td>{camera.name}</td>
+                                <td>{camera.location}</td>
+                                <td>{camera.rtsp_url}</td>
+                                <td>{camera.status}</td>
+                                <td>
+                                  <i
+                                    className="bi bi-pencil btn btn-outline-warning me-2 cursor-pointer"
+                                    onClick={() =>
+                                      handleSelectedCamera(camera.id, "edit")
+                                    }
+                                  ></i>
+                                  <i
+                                    className="bi bi-trash btn btn-danger cursor-pointer"
+                                    data-bs-toggle="modal"
+                                    data-bs-target="#deleteCameraBackdrop"
+                                    onClick={() =>
+                                      handleSelectedCamera(camera.id, "delete")
+                                    }
+                                  ></i>
+                                </td>
+                              </tr>
+                            ))
+                          ) : (
+                            <tr>
+                              <td colSpan="6" className="text-center">
+                                No camera
+                              </td>
+                            </tr>
+                          )}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                </div>
+                {/* Week Plan Tab */}
+                <div
+                  class="tab-pane fade"
+                  id="v-pills-weekPlan"
+                  role="tabpanel"
+                  aria-labelledby="v-pills-weekPlan-tab"
                   tabindex="0"
                 >
                   <WeekPlanTable
@@ -685,189 +1027,6 @@ const WeekPlanSetting = () => {
                     setSelected={setSelected}
                   />
                 </div>
-                {/* Intersection Tab */}
-                <div
-                  class="tab-pane fade"
-                  id="v-pills-profile"
-                  role="tabpanel"
-                  aria-labelledby="v-pills-profile-tab"
-                  tabindex="0"
-                >
-                  <form onSubmit={handleAddIntersection}>
-                    <div>
-                      <label htmlFor="newIntersection">
-                        Add new intersection:
-                      </label>
-                      <input
-                        type="text"
-                        className="form-control"
-                        id="newIntersection"
-                        value={newIntersection}
-                        onChange={(e) => setNewIntersection(e.target.value)}
-                        placeholder="Enter new intersection"
-                        required
-                      />
-                      <button type="submit" className=" btn btn-dark m-2">
-                        Add <i className="bi bi-plus-circle ms-2"></i>
-                      </button>
-                    </div>
-                  </form>
-
-                  <div className="tableContainer">
-                    <table className=" table table-bordered table-striped">
-                      <thead>
-                        <th>No.</th>
-                        <th>Intersection</th>
-                        <th></th>
-                      </thead>
-                      <tbody>
-                        {intersection ? (
-                          intersection.map((intersection, i) => (
-                            <tr key={i}>
-                              <td>{i + 1}</td>
-                              <td>{intersection.intersection_name}</td>
-                              <td className="d-flex align-items-center">
-                                <h5
-                                  className="bi bi-pencil btn btn-outline-warning me-2"
-                                  data-bs-toggle="modal"
-                                  data-bs-target="#editBackdrop"
-                                  onClick={() =>
-                                    handleSelectedIntersection(intersection)
-                                  }
-                                ></h5>
-                                <h5
-                                  className="bi bi-trash btn btn-outline-danger"
-                                  data-bs-toggle="modal"
-                                  data-bs-target="#deleteBackdrop"
-                                  onClick={() =>
-                                    handleSelectedIntersection(intersection)
-                                  }
-                                ></h5>
-                              </td>
-                            </tr>
-                          ))
-                        ) : (
-                          <i>No intersection</i>
-                        )}
-                      </tbody>
-                    </table>
-                    <div>
-                      <form>
-                        <div>
-                          <input
-                            required
-                            type="text"
-                            name="name"
-                            value={name}
-                            onChange={(e) => setName(e.target.value)}
-                            placeholder="Name"
-                          />
-                        </div>
-                        <div className="input-group">
-                          <input
-                            className="form-control"
-                            required
-                            type="text"
-                            name="username"
-                            value={username}
-                            onChange={(e) => setUsername(e.target.value)}
-                            placeholder="Username"
-                          />
-                          <input
-                            className="form-control"
-                            required
-                            type="text"
-                            name="password"
-                            value={password}
-                            onChange={(e) => setPassword(e.target.value)}
-                            placeholder="Password"
-                          />
-                          <input
-                            className="form-control"
-                            required
-                            type="text"
-                            name="camera_ip"
-                            value={camera_ip}
-                            onChange={(e) => setCameraIP(e.target.value)}
-                            placeholder="Camera IP(192.168.100.25)"
-                          />
-                          <input
-                            className="form-control"
-                            required
-                            type="text"
-                            name="port"
-                            value={port}
-                            onChange={(e) => setPort(e.target.value)}
-                            placeholder="Port(554)"
-                          />
-                          <input
-                            className="form-control"
-                            required
-                            type="text"
-                            name="stream"
-                            value={stream}
-                            onChange={(e) => setStream(e.target.value)}
-                            placeholder="Stream Name (stream1)"
-                          />
-                        </div>
-                        <div>
-                          <input
-                            required
-                            type="text"
-                            name="location"
-                            value={location}
-                            onChange={(e) => setLocation(e.target.value)}
-                            placeholder="Location Intersection"
-                          />
-                        </div>
-                        <button
-                          type="button"
-                          onClick={addCamera}
-                          className="btn btn-success"
-                        >
-                          Submit
-                        </button>
-                      </form>
-                    </div>
-                    <table className="table table-bordered table-striped">
-                      <thead>
-                        <tr>
-                          <th>ID</th>
-                          <th>Camera Name</th>
-                          <th>RTSP URL</th>
-                          <th>Location</th>
-                          <th>Status</th>
-                          <th></th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {cameras && cameras.length > 0 ? (
-                          cameras.map((camera) => (
-                            <tr key={camera.id}>
-                              <td>{camera.id}</td>
-                              <td>{camera.name}</td>
-                              <td>{camera.rtsp_url}</td>
-                              <td>{camera.location}</td>
-                              <td>{camera.status}</td>
-                              <td>
-                                <i
-                                  className="bi bi-trash text-danger cursor-pointer"
-                                  onClick={() => deleteCamera(camera.id)}
-                                ></i>
-                              </td>
-                            </tr>
-                          ))
-                        ) : (
-                          <tr>
-                            <td colSpan="6" className="text-center">
-                              No camera
-                            </td>
-                          </tr>
-                        )}
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
               </div>
             </div>
           </div>
@@ -879,6 +1038,7 @@ const WeekPlanSetting = () => {
         />
         <LogoutModal logout={logout} />
       </div>
+      <IntersectionModals found={found} deleteCamera={deleteCamera}/>
       {/* Add Intersection Modal */}
       <div
         className="modal fade"
