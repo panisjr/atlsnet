@@ -170,7 +170,7 @@ const WeekPlanTable = ({
                                     <i>No Timer</i>
                                   )}
                                 </td>
-                                <td>{road.camera_info.camera_status}</td>
+                                <td>{road.camera_info?.camera_status || <i>No Camera Status</i>}</td>
                                 <td>
                                   <div>
                                     <i

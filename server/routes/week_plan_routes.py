@@ -5,14 +5,13 @@ from models import *
 import re
 import jwt
 import pytz
-
+from sqlalchemy import case
+import time
 week_plan_routes = Blueprint("week_plan_routes", __name__)
 
 # Assume you have your database models and configurations here
 local_tz = pytz.timezone("Asia/Manila")
 
-
-# GET WEEK PLAN
 @week_plan_routes.route("/get_weekPlan", methods=["GET"])
 def get_week_plan():
     week_plans = WeekPlan.query.all()
@@ -26,11 +25,19 @@ def get_week_plan():
             TrafficLightSetting.query.get(plan.traffic_light_id)
             if plan.traffic_light_id is not None else None
         )
-
+        print(traffic_light_setting)
         camera_info = None  # Initialize camera_info
         # Fetch camera information if traffic_light_setting and camera_id exist
-        if traffic_light_setting and traffic_light_setting.camera_id:
-            camera_info = Camera.query.get(traffic_light_setting.camera_id)
+        if traffic_light_setting:
+            print("Traffic Light Setting:", traffic_light_setting)
+            if traffic_light_setting.camera_id:
+                camera_info = Camera.query.get(traffic_light_setting.camera_id)
+                if camera_info:
+                    print("Camera Info Found:", camera_info.id, camera_info.name)
+                else:
+                    print("No Camera Info Found for Camera ID:", traffic_light_setting.camera_id)
+            else:
+                print("Traffic Light Setting has no Camera ID")
 
         # Fetch all traffic lights for the same day if traffic_light_setting exists
         same_day_traffic_lights = (
@@ -58,15 +65,7 @@ def get_week_plan():
                 "modified_at": plan.modified_at,
             }
         )
-        if camera_info:
-            print("Camera Name:", camera_info.name)
     return jsonify(results), 200
-
-
-
-
-from flask import jsonify
-from sqlalchemy import case
 
 # GET TRAFFIC LIGHT SETTING
 @week_plan_routes.route("/get_trafficLight", methods=["GET"])
@@ -193,17 +192,30 @@ def add_week_plan(id):
         db.session.add(new_traffic_light)
         db.session.commit()
 
-        # Create the new WeekPlan
+        # Wait until the TrafficLightSetting is created
+        retry_count = 0
+        max_retries = 5
+        while retry_count < max_retries:
+            db.session.refresh(new_traffic_light)  # Refresh to get the latest state
+            if new_traffic_light.id:
+                break
+            time.sleep(0.5)  # Wait for 500ms before retrying
+            retry_count += 1
+
+        # Verify if the TrafficLightSetting exists
+        if not new_traffic_light.id:
+            return jsonify({"error": "Failed to create TrafficLightSetting in time."}), 500
+
+        # Create the WeekPlan
         new_week_plan = WeekPlan(
             intersection_id=intersection.id,
             traffic_light_id=new_traffic_light.id,
             created_at=datetime.now(),
             modified_at=datetime.now(),
         )
-
-        # Commit new WeekPlan
         db.session.add(new_week_plan)
         db.session.commit()
+
         return jsonify({"message": "Week Plan added successfully!"}), 200
 
     except Exception as e:

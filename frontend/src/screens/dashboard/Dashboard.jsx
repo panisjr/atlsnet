@@ -114,7 +114,7 @@ const Dashboard = () => {
               </p>
             </div>
             {/* 4 Cards */}
-            <div className="row d-flex align-items-center justify-content-around">
+            <div className="row d-flex align-items-center justify-content-around dashboard-card-container">
               {/* Today's Users */}
               <div className="col-3 col-md-3 dashboard-card1 ">
                 <div>

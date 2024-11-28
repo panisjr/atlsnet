@@ -221,7 +221,7 @@ const LandingPage = () => {
                             class="shadow ratio ratio-1x1 rounded bg-cover mt-5 bp-center float-end"
                             data-aos="fade-up"
                             style={{
-                              backgroundImage: "url('./intersection2.png')",
+                              backgroundImage: "url('./field.jpg')",
                             }}
                           ></div>
                         </div>

@@ -598,7 +598,7 @@ const WeekPlanSetting = () => {
       );
       setShowMessage(true);
       fetchCameras();
-      clearCameraForm()
+      clearCameraForm();
       setSuccess(response.data.message);
       setTimeout(() => {
         setShowMessage(false);
@@ -615,7 +615,7 @@ const WeekPlanSetting = () => {
     }
   };
   const editCamera = async (id) => {
-    console.log("id: ",id);
+    console.log("id: ", id);
     try {
       const rtsp_url = `rtsp://${username}:${password}@${camera_ip}:${port}/${stream}`;
       const token = sessionStorage.getItem("token");
@@ -834,19 +834,29 @@ const WeekPlanSetting = () => {
                               <i>Custom Camera Name</i>
                             </label>
                           </div>
-                          <div className="col-md-6 form-floating">
-                            <input
-                              required
-                              className="form-control form-control-sm"
-                              id="location"
-                              type="text"
-                              name="location"
+                          <div className="form-floating">
+                            <select
+                              className="form-select form-select-sm"
+                              id="floatingSelect"
+                              aria-label="Floating label select example"
                               value={location}
                               onChange={(e) => setLocation(e.target.value)}
-                              placeholder="Location Intersection"
-                            />
-                            <label htmlFor="location">
-                              <i>Location</i>
+                              required
+                            >
+                              <option value="" disabled selected>
+                              Select Location
+                              </option>
+                              {intersection.map((intersection) => (
+                                <option
+                                  key={intersection.id}
+                                  value={intersection.intersection_name}
+                                >
+                                  {intersection.intersection_name}
+                                </option>
+                              ))}
+                            </select>
+                            <label htmlFor="floatingSelect">
+                              Location
                             </label>
                           </div>
                         </div>
@@ -921,10 +931,10 @@ const WeekPlanSetting = () => {
                               name="stream"
                               value={stream}
                               onChange={(e) => setStream(e.target.value)}
-                              placeholder="Stream Name (stream1)"
+                              placeholder="Stream Name"
                             />
                             <label for="stream">
-                              <i>Stream Path</i>
+                              <i>Stream Path (stream1)</i>
                             </label>
                           </div>
                         </div>
@@ -1038,7 +1048,7 @@ const WeekPlanSetting = () => {
         />
         <LogoutModal logout={logout} />
       </div>
-      <IntersectionModals found={found} deleteCamera={deleteCamera}/>
+      <IntersectionModals found={found} deleteCamera={deleteCamera} />
       {/* Add Intersection Modal */}
       <div
         className="modal fade"

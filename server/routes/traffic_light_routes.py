@@ -125,7 +125,7 @@ def set_timer(id):
                              f"{existing_start_time} - {existing_end_time} set to {existing_light.traffic_mode} mode."
                 }), 409
 
-    # # Prevent duplicate traffic light names on the same day and mode
+    # Prevent duplicate traffic light names on the same day and mode
     # if any(existing_light.traffic_light_name == new_traffic_light_name and
     #        existing_light.day == new_day and
     #        existing_light.traffic_mode == new_traffic_mode
