@@ -6,7 +6,9 @@ import { decodeJwt } from "jose";
 import AOS from "aos";
 import "aos/dist/aos.css"; // Import AOS styles
 import ToastNotification from "../ToastNotification";
+import config from './config'; 
 const SignIn = () => {
+  const apiUrl = config.API_URL;
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [data, setData] = useState("");
@@ -23,7 +25,7 @@ const SignIn = () => {
     setError(null);
 
     try {
-      const response = await axios.post("http://localhost:5000/users/signIn", {
+      const response = await axios.post(`${apiUrl}/users/signIn`, {
         email,
         password,
       });

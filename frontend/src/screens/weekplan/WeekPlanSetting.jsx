@@ -719,23 +719,6 @@ const WeekPlanSetting = () => {
                     Week Plan Setting
                   </p>
                 </div>
-                <div className="d-flex">
-                  <button
-                    className="btn btn-dark me-3"
-                    data-bs-toggle="modal"
-                    data-bs-target="#addIntersectionBackdrop"
-                  >
-                    Add <i className="bi bi-plus-circle ms-2"></i>
-                  </button>
-                  <input
-                    className="form-control searchBar"
-                    type="search"
-                    placeholder="Search"
-                    aria-label="Search"
-                    value={searchQuery}
-                    onChange={handleSearch}
-                  />
-                </div>
               </div>
               {/* Side Bar */}
               <div class="tab-content pt-4 vw-100" id="v-pills-tabContent">
@@ -844,7 +827,7 @@ const WeekPlanSetting = () => {
                               required
                             >
                               <option value="" disabled selected>
-                              Select Location
+                                Select Location
                               </option>
                               {intersection.map((intersection) => (
                                 <option
@@ -855,9 +838,7 @@ const WeekPlanSetting = () => {
                                 </option>
                               ))}
                             </select>
-                            <label htmlFor="floatingSelect">
-                              Location
-                            </label>
+                            <label htmlFor="floatingSelect">Location</label>
                           </div>
                         </div>
                         {/* Username , Password, Camera IP, Stream Name, Port*/}
@@ -1027,6 +1008,23 @@ const WeekPlanSetting = () => {
                   aria-labelledby="v-pills-weekPlan-tab"
                   tabindex="0"
                 >
+                  <div className="mb-3 d-flex">
+                    <button
+                      className="btn btn-dark"
+                      data-bs-toggle="modal"
+                      data-bs-target="#addIntersectionBackdrop"
+                    >
+                      Add <i className="bi bi-plus-circle ms-2"></i>
+                    </button>
+                    <input
+                      className="form-control searchBar"
+                      type="search"
+                      placeholder="Search"
+                      aria-label="Search"
+                      value={searchQuery}
+                      onChange={handleSearch}
+                    />
+                  </div>
                   <WeekPlanTable
                     intersection={filteredIntersection}
                     weekPlan={weekPlan}
