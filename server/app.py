@@ -1,16 +1,14 @@
 from flask import Flask
 from flask_cors import CORS
-from extensions import db  # Import your db instance
+from extensions import db,socketio  # Import your db instance
 from routes import main_routes  # Import the main_routes blueprint
-from extensions import socketio
-
+import os
 def create_app():
     app = Flask(__name__)
-    CORS(app, origins="*")
+    CORS(app, origins=["https://atlsnet.tech", "https://atlsnetserver.site"])
 
     # Initialize database
-    app.config["SQLALCHEMY_DATABASE_URI"] = "postgresql://postgres:atlsnet-postgres@atlsnet-db.cnoq2uo0erkf.ap-southeast-2.rds.amazonaws.com:5432/atlsnetDB"
-    # app.config["SQLALCHEMY_DATABASE_URI"] = "postgresql://postgres:postgres@localhost/atls"
+    app.config["SQLALCHEMY_DATABASE_URI"] = f"postgresql://{os.getenv('DB_USER')}:{os.getenv('DB_PASSWORD')}@{os.getenv('DB_HOST')}:5432/{os.getenv('DB_NAME')}"
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
     # Initialize the database with the app
