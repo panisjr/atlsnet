@@ -3,49 +3,79 @@ from datetime import datetime
 from extensions import db
 from models import *
 import jwt
+import re
+import os
+import shutil
+intersection_routes = Blueprint("intersection_routes", __name__)
 
-intersection_routes = Blueprint('intersection_routes', __name__)
 
 # GET INTERSECTIONS
-@intersection_routes.route('/get_intersections', methods=['GET'])
+@intersection_routes.route("/get_intersections", methods=["GET"])
 def get_intersections():
     roads = Intersection.query.order_by(Intersection.id.asc()).all()
 
     road_list = []
     for road in roads:
         road_data = {
-            'id': road.id,
-            'intersection_name': road.intersection_name,
-            'road_name': road.road_name,
-            'created_at': road.created_at.strftime('%Y-%m-%d %H:%M:%S'),
-            'modified_at': road.modified_at.strftime('%Y-%m-%d %H:%M:%S')
+            "id": road.id,
+            "intersection_name": road.intersection_name,
+            "road_name": road.road_name,
+            "created_at": road.created_at.strftime("%Y-%m-%d %H:%M:%S"),
+            "modified_at": road.modified_at.strftime("%Y-%m-%d %H:%M:%S"),
         }
         road_list.append(road_data)
 
     return jsonify(road_list), 200
 
+
 # ADD INTERSECTION
-@intersection_routes.route('/add_intersections', methods=['POST'])
+def format_cameras(camera):
+    return {
+        "id": camera.id,
+        "name": camera.name,
+        "rtsp_url": camera.rtsp_url,
+        "location": camera.location,
+        "status": camera.status,
+        "created_at": camera.created_at,
+    }
+
+
+@intersection_routes.route("/get_cameras", methods=["GET"])
+def get_camera():
+    try:
+        cameras = Camera.query.order_by(Camera.id.asc()).all()
+        cameras_url = [format_cameras(camera) for camera in cameras]
+        return jsonify(cameras_url), 200
+    except Exception as e:
+        return jsonify({"error": "Error occurred when getting cameras"}), 500
+
+
+@intersection_routes.route("/add_intersections", methods=["POST"])
 def add_intersection():
     data = request.get_json()
-    new_intersection = data['newIntersection']
-    intersection = Intersection.query.filter_by(intersection_name=new_intersection).one_or_none()
+    new_intersection = data["newIntersection"]
+    intersection = Intersection.query.filter_by(
+        intersection_name=new_intersection
+    ).one_or_none()
     if intersection:
         return jsonify({"error": "This intersection already exists!"}), 400
     try:
         new_road = Intersection(
-            intersection_name=data['newIntersection'],
-            created_at=datetime.now()
+            intersection_name=data["newIntersection"], created_at=datetime.now()
         )
         db.session.add(new_road)
         db.session.commit()
         return jsonify({"message": "Intersection added successfully"}), 201
     except Exception as e:
         db.session.rollback()
-        return jsonify({"error": "An error occurred while creating the intersection"}), 500
+        return (
+            jsonify({"error": "An error occurred while creating the intersection"}),
+            500,
+        )
+
 
 # DELETE INTERSECTION
-@intersection_routes.route('/delete_intersection/<int:id>', methods=['DELETE'])
+@intersection_routes.route("/delete_intersection/<int:id>", methods=["DELETE"])
 def delete_intersection(id):
     token = request.headers.get("Authorization")
     if not token:
@@ -53,13 +83,25 @@ def delete_intersection(id):
     intersection = Intersection.query.filter_by(id=id).one_or_none()
     if not intersection:
         return jsonify({"error": "Intersection not found!"}), 404
-    check_intersection_id = WeekPlan.query.filter_by(intersection_id=intersection.id).one_or_none()
+    check_intersection_id = WeekPlan.query.filter_by(
+        intersection_id=intersection.id
+    ).one_or_none()
     print(intersection.id)
-    print("Intersection id from WeekPlan model:", check_intersection_id.intersection_id if check_intersection_id else "Not found")
+    print(
+        "Intersection id from WeekPlan model:",
+        check_intersection_id.intersection_id if check_intersection_id else "Not found",
+    )
     if check_intersection_id:
-        return jsonify({"error":"This intersection has data! Make sure it don't have any data."}), 409
+        return (
+            jsonify(
+                {
+                    "error": "This intersection has data! Make sure it don't have any data."
+                }
+            ),
+            409,
+        )
     try:
-        
+
         db.session.delete(intersection)
         db.session.commit()
         return jsonify({"message": "Intersection deleted successfully!"}), 200
@@ -69,10 +111,14 @@ def delete_intersection(id):
         return jsonify({"error": "Invalid token!"}), 401
     except Exception as e:
         db.session.rollback()
-        return jsonify({"error": "An error occurred while deleting the intersection!"}), 500
+        return (
+            jsonify({"error": "An error occurred while deleting the intersection!"}),
+            500,
+        )
+
 
 # UPDATE INTERSECTION
-@intersection_routes.route('/update_intersections/<int:id>', methods=['PUT'])
+@intersection_routes.route("/update_intersections/<int:id>", methods=["PUT"])
 def update_intersection(id):
     token = request.headers.get("Authorization")
     if not token:
@@ -82,9 +128,11 @@ def update_intersection(id):
         intersection = Intersection.query.filter_by(id=id).one_or_none()
         if not intersection:
             return jsonify({"error": "Intersection not found"}), 404
-        
+
         data = request.get_json()
-        intersection.intersection_name = data.get("intersection_name", intersection.intersection_name)
+        intersection.intersection_name = data.get(
+            "intersection_name", intersection.intersection_name
+        )
         intersection.modified_at = datetime.now()
 
         db.session.commit()
@@ -96,4 +144,157 @@ def update_intersection(id):
         return jsonify({"error": "Invalid token!"}), 401
     except Exception as e:
         db.session.rollback()
-        return jsonify({"error": "An error occurred while updating the intersection!"}), 500
+        return (
+            jsonify({"error": "An error occurred while updating the intersection!"}),
+            500,
+        )
+
+
+# ADD CAMERA
+def validate_rtsp_url(rtsp_url):
+    # Regex pattern to match RTSP URL with username, password, IP address, port, and stream path
+    rtsp_pattern = (
+        r"^rtsp://([a-zA-Z0-9_-]+):([a-zA-Z0-9_-]+)@([a-zA-Z0-9.-]+)(:[0-9]+)?(/.*)?$"
+    )
+    if re.match(rtsp_pattern, rtsp_url):
+        return True
+    else:
+        return False
+
+
+@intersection_routes.route("/add_camera", methods=["POST"])
+def add_camera():
+    data = request.get_json()
+
+    if not data:
+        return jsonify({"error": "No data provided!"}), 400
+
+    name = data.get("name")
+    rtsp_url = data.get("rtsp_url")
+    location = data.get("location", "")
+
+    intersection = Intersection.query.filter_by(
+        intersection_name=location
+    ).one_or_none()
+    if not intersection:
+        return jsonify({"error": "Intersection not found"}), 404
+    if not name or not rtsp_url or not location:
+        return (
+            jsonify(
+                {"error": "All fields are required! Make sure to fill all the field."}
+            ),
+            400,
+        )
+
+    new_camera = Camera(
+        name=name, intersection_id=intersection.id, rtsp_url=rtsp_url, location=location
+    )
+    db.session.add(new_camera)
+    db.session.commit()
+
+    return jsonify({"message": "Camera added successfully!"})
+
+@intersection_routes.route("/delete_camera/<int:camera_id>", methods=["DELETE"])
+def delete_camera(camera_id):
+    token = request.headers.get("Authorization")
+    if not token:
+        return jsonify({"error": "Unauthorized! Invalid action!"}), 401
+    try:
+        # Find the camera by ID
+        camera = Camera.query.get(camera_id)
+        if not camera:
+                return jsonify({"error": "Camera not found!"}), 404
+
+        # Check if the camera is connected to a traffic light
+        traffic_light = TrafficLightSetting.query.filter_by(camera_id=camera.id).one_or_none()
+        if traffic_light and hasattr(traffic_light, "camera_id") and traffic_light.camera_id:
+            return (
+                jsonify({"error": "Error deleting! This camera is currently connected!"}),
+                409,
+            )
+        # Define the path to the HLS stream file
+        hls_file_path = os.path.abspath(f"hls/{camera.id}")
+        # Check if the file exists
+        if os.path.exists(hls_file_path):
+            try:
+                if os.access(hls_file_path, os.W_OK):  # Check write access
+                    if os.path.isfile(hls_file_path):
+                        os.remove(hls_file_path)
+                        print(f"File {hls_file_path} deleted.")
+                    elif os.path.isdir(hls_file_path):  # Handle directory case
+                        shutil.rmtree(hls_file_path, ignore_errors=True)
+                        print(f"Directory {hls_file_path} deleted.")
+                else:
+                    return jsonify({"error": f"Cannot delete file {hls_file_path}. Permission denied."}), 500
+            except Exception as e:
+                print(f"Error deleting {hls_file_path}: {e}")
+                return jsonify({"error": f"Failed to delete {hls_file_path}. {str(e)}"}), 500
+        else:
+            print(f"File {hls_file_path} does not exist.")
+
+        # Remove the camera record from the database
+        db.session.delete(camera)
+        db.session.commit()
+
+        return jsonify({"message": "Camera deleted successfully!"}), 200
+
+    except AttributeError as e:
+        return jsonify({"error": f"AttributeError: {str(e)}"}), 500
+    except Exception as e:
+        return jsonify({"error": f"Unexpected error: {str(e)}"}), 500
+
+
+# Edit Camera
+@intersection_routes.route("/edit_camera/<int:camera_id>", methods=["PUT"])
+def edit_camera(camera_id):
+    data = request.get_json()
+    if not data:
+        return jsonify({"error": "No data provided!"}), 400
+
+    # Validate Authorization Header
+    token = request.headers.get("Authorization")
+    if not token or not token.startswith("Bearer "):
+        return jsonify({"error": "Unauthorized! Invalid action!"}), 401
+
+    # Extract Fields from Request Data
+    name = data.get("name")
+    rtsp_url = data.get("rtsp_url")
+    location = data.get("location")
+    status = data.get("status")  # Optional field
+    intersection = Intersection.query.filter_by(
+        intersection_name=location
+    ).one_or_none()
+    if not intersection:
+        return jsonify({"error": "Intersection not found"}), 404
+    # Validate RTSP URL
+    if rtsp_url and not validate_rtsp_url(rtsp_url):  # Define validate_rtsp_url
+        return jsonify({"error": "Invalid RTSP URL format!"}), 400
+
+    # Retrieve Camera
+    camera = Camera.query.get(camera_id)
+    if camera is None:
+        return jsonify({"error": "Camera not found!"}), 404
+
+    # Validate Required Fields
+    if not name or not rtsp_url or not location:
+        return (
+            jsonify({"error": "All fields are required! Please fill all the fields."}),
+            400,
+        )
+
+    # Update Fields
+    camera.name = name
+    camera.intersection_id = intersection.id
+    camera.rtsp_url = rtsp_url
+    camera.location = location
+    if status is not None:  # Update status if provided
+        camera.status = status
+    camera.modified_at = datetime.now()
+
+    # Commit Changes
+    try:
+        db.session.commit()
+        return jsonify({"message": "Camera updated successfully"}), 200
+    except Exception as e:
+        db.session.rollback()  # Rollback in case of error
+        return jsonify({"error": f"Error occurred while editing camera: {str(e)}"}), 500

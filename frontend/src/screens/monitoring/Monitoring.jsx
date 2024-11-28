@@ -5,12 +5,13 @@ import TrafficLight from "./TrafficLight";
 import LogoutModal from "../LogoutModal";
 import SideNavbar from "../SideNavbar";
 import "./Monitoring.css";
+import CommandCenter from "./CommandCenter";
 // Get current day as a string, e.g., "Monday"
 const getCurrentDay = () => {
   return new Date().toLocaleDateString("en-US", { weekday: "long" });
 };
 const Monitoring = () => {
-  const api = "http://localhost:5000"
+  const api = "http://localhost:5000";
   // State variables
   const [selectedFiles, setSelectedFiles] = useState([null, null, null, null]);
   const [processedVideoUrls, setProcessedVideoUrls] = useState([
@@ -125,22 +126,18 @@ const Monitoring = () => {
       const formData = new FormData();
       formData.append("video_file", selectedFiles[index]);
 
-      const response = await axios.post(
-        `${api}/videos/video_feed`,
-        formData,
-        {
-          headers: {
-            "Content-Type": "multipart/form-data",
-          },
-          responseType: "json",
-          onUploadProgress: (progressEvent) => {
-            const progress = Math.round(
-              (progressEvent.loaded * 100) / progressEvent.total
-            );
-            setUploadProgress(progress); // Update upload progress
-          },
-        }
-      );
+      const response = await axios.post(`${api}/videos/video_feed`, formData, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+        responseType: "json",
+        onUploadProgress: (progressEvent) => {
+          const progress = Math.round(
+            (progressEvent.loaded * 100) / progressEvent.total
+          );
+          setUploadProgress(progress); // Update upload progress
+        },
+      });
       const { in_counts, out_counts, video_file } = response.data;
 
       // Update counts state
@@ -242,16 +239,12 @@ const Monitoring = () => {
   // NEW ADDED CODES
   const [weekPlan, setWeekPlan] = useState([]);
   const fetchWeekPlan = async () => {
-    const response = await axios.get(
-      `${api}/weekPlan/get_weekPlan`
-    );
+    const response = await axios.get(`${api}/weekPlan/get_weekPlan`);
     setWeekPlan(response.data);
   };
   const [trafficLightSettings, setTrafficLightSettings] = useState([]);
   const fetchTrafficLightSetting = async () => {
-    const response = await axios.get(
-      `${api}/weekPlan/get_trafficLight`
-    );
+    const response = await axios.get(`${api}/weekPlan/get_trafficLight`);
     setTrafficLightSettings(response.data);
   };
   const groupedByDay = trafficLightSettings.reduce((acc, light) => {
@@ -273,14 +266,11 @@ const Monitoring = () => {
   const deleteVideo = async (id) => {
     try {
       const token = sessionStorage.getItem("token");
-      const response = await axios.delete(
-        `${api}/videos/delete_video/${id}`,
-        {
-          headers: {
-            Authorization: `${token}`,
-          },
-        }
-      );
+      const response = await axios.delete(`${api}/videos/delete_video/${id}`, {
+        headers: {
+          Authorization: `${token}`,
+        },
+      });
       fetchVideo();
       setShowMessage(true);
       setSuccess(response.data.msg);
@@ -302,11 +292,13 @@ const Monitoring = () => {
       <div className="container-fluid  vh-100 vw-100">
         <div className="row">
           <SideNavbar handleClick={handleClick} active={active} />
+
           <div className="col-10 col-md-10 p-4">
-              <h6 className="p-3">
-                <span className="text-secondary">Pages</span> / Monitoring
-              </h6>
+            <h6 className="p-3">
+              <span className="text-secondary">Pages</span> / Monitoring
+            </h6>
             <div className="row monitoringContainer">
+              <CommandCenter />
               {/* Lane selection and upload section */}
               <div className="d-flex align-items-center justify-content-center">
                 <select

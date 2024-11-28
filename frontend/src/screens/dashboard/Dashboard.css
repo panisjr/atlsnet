@@ -37,3 +37,19 @@
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
     border: 1px solid rgb(234, 234, 234);
 }
+@media screen  and (max-width:640px){
+    .dashboard-card1{
+        width: 80%;
+        margin-bottom: 10px;
+    }
+    .dashboard-card-container{
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        justify-content: center;
+
+    }
+    .graph-container{
+       width: auto;
+    }
+}

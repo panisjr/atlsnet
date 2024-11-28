@@ -1,0 +1,33 @@
+.camera-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px; /* Adjust the gap between the cards */
+    justify-content: center; /* Center the items */
+  }
+  
+  .camera-card {
+    flex: 1 1 calc(25% - 20px); /* Each card takes up 25% of the container width */
+    max-width: calc(25% - 20px); /* Ensures the card doesn't exceed 25% of the container */
+    box-sizing: border-box;
+    border: 1px solid #ddd; /* Optional: Add border for better visual */
+    padding: 10px; /* Optional: Add padding inside the card */
+  }
+  
+  @media (max-width: 1200px) {
+    .camera-card {
+      flex: 1 1 calc(33.33% - 20px); /* 3 columns for medium screens */
+    }
+  }
+  
+  @media (max-width: 900px) {
+    .camera-card {
+      flex: 1 1 calc(50% - 20px); /* 2 columns for small screens */
+    }
+  }
+  
+  @media (max-width: 600px) {
+    .camera-card {
+      flex: 1 1 100%; /* 1 column for extra small screens */
+    }
+  }
+  

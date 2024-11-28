@@ -7,7 +7,7 @@ const CameraManager = ({ selectedCameraId, setSelectedCameraId }) => {
   useEffect(() => {
     const fetchCameras = async () => {
       try {
-        const response = await axios.get(`${api}/videos/get_cameras`);
+        const response = await axios.get(`${api}/intersections/get_cameras`);
         setCameras(response.data);
       } catch (error) {
         console.error("Error fetching cameras:", error);
@@ -68,7 +68,7 @@ const CameraManager = ({ selectedCameraId, setSelectedCameraId }) => {
             {cameras.map((camera) => (
               <option key={camera.id} value={camera.id}>
                 {camera.name} (Active:{" "}
-                {camera.status === "Active" ? "Yes" : "No"})
+                {camera.status === "active" ? "Yes" : "No"})
               </option>
             ))}
           </select>

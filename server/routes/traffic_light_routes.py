@@ -125,7 +125,7 @@ def set_timer(id):
                              f"{existing_start_time} - {existing_end_time} set to {existing_light.traffic_mode} mode."
                 }), 409
 
-    # # Prevent duplicate traffic light names on the same day and mode
+    # Prevent duplicate traffic light names on the same day and mode
     # if any(existing_light.traffic_light_name == new_traffic_light_name and
     #        existing_light.day == new_day and
     #        existing_light.traffic_mode == new_traffic_mode
@@ -153,27 +153,4 @@ def set_timer(id):
         print(f"Error: {str(e)}")  # Log the exception details
         return jsonify({"error": "An error occurred while adding the new timer"}), 500
 
-
-@traffic_light_routes.route("/add_camera", methods=["POST"])
-def add_camera():
-    data = request.get_json()
-
-    if not data:
-        return jsonify({"error": "No data provided!"}), 400
-
-    name = data.get("name")
-    rtsp_url = data.get("rtsp_url")
-    location = data.get("location")
-
-    print("Name:", name, "RTSP URL:", rtsp_url, "Location:", location)
-    # Check if name or rtsp_url is missing
-    if not name or not rtsp_url:
-        return jsonify({"error": "Name and RTSP URL are required!"}), 400
-
-    # Add new camera to the database
-    new_camera = Camera(name=name, rtsp_url=rtsp_url, location=location)
-    db.session.add(new_camera)
-    db.session.commit()
-
-    return jsonify({"message": "Camera added successfully!"}), 200
 
