@@ -4,7 +4,6 @@ import "bootstrap/dist/js/bootstrap.bundle.min.js";
 import "bootstrap-icons/font/bootstrap-icons.css";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 // import Footage from "./screens/Footage";
-import Testing from "./screens/Testing";
 import Monitoring from "./screens/monitoring/Monitoring";
 import AccountManagement from "./screens/account/AccountManagement";
 import WeekPlanSetting from "./screens/weekplan/WeekPlanSetting";
@@ -14,8 +13,6 @@ import Dashboard from "./screens/dashboard/Dashboard";
 import SignIn from "./screens/landingSignIn/SignIn";
 import LandingPage from "./screens/landingSignIn/LandinPage";
 import CommandCenter from "./screens/monitoring/CommandCenter";
-import Testing3 from "./screens/Testing3";
-import Testing2 from "./screens/Testing2";
 import TrafficLightStatus from "./screens/monitoring/TrafficLightStatus";
 // import { StreamProvider } from "./screens/StreamProvider";
 function App() {
@@ -66,9 +63,6 @@ function App() {
           }
         />
         <Route path="/footage" element={<TrafficLightStatus />} />
-        <Route path="/testing" element={<Testing />} />
-        <Route path="/testing2" element={<Testing2 />} />
-        <Route path="/testing3" element={<Testing3 />} />
         <Route path="/commandCenter" element={<CommandCenter />} />
       </Routes>
     </BrowserRouter>
