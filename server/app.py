@@ -6,11 +6,10 @@ from extensions import socketio
 
 def create_app():
     app = Flask(__name__)
-    CORS(app, origins="*")
+    CORS(app, origins=["https://atlsnet.tech", "https://atlsnetserver.site"])
 
     # Initialize database
     app.config["SQLALCHEMY_DATABASE_URI"] = "postgresql://postgres:atlsnet-postgres@atlsnet-db.cnoq2uo0erkf.ap-southeast-2.rds.amazonaws.com:5432/atlsnetDB"
-    # app.config["SQLALCHEMY_DATABASE_URI"] = "postgresql://postgres:postgres@localhost/atls"
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
     # Initialize the database with the app
