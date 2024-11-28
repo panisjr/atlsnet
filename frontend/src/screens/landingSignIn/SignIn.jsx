@@ -6,7 +6,7 @@ import { decodeJwt } from "jose";
 import AOS from "aos";
 import "aos/dist/aos.css"; // Import AOS styles
 import ToastNotification from "../ToastNotification";
-import config from './config'; 
+import config from '../../config'; 
 const SignIn = () => {
   const apiUrl = config.API_URL;
   const [email, setEmail] = useState("");
