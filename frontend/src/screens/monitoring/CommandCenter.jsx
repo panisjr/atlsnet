@@ -1,14 +1,18 @@
 import React, { useEffect, useRef, useState } from "react";
-import Hls from "hls.js";
-import { io } from "socket.io-client";
 import axios from "axios";
+import videojs from "video.js";
+import "video.js/dist/video-js.css";
 import "./CommandCenter.css";
 import config from '../../config'; 
+
 function CommandCenter() {
   const [cameras, setCameras] = useState([]); // Store the list of active cameras
-  const socket = useRef(null);
+  const [isHlsStream, setIsHlsStream] = useState(true); // Toggle for HLS or RTMP stream type
 
   const apiUrl = config.API_URL;
+  // const apiUrl = "http://localhost:5000";
+  const videoRefs = useRef([]);
+
   // Fetch all cameras from the backend
   const fetchCameras = async () => {
     try {
@@ -31,93 +35,67 @@ function CommandCenter() {
     }
   };
 
-  // Initialize Socket.IO connection
-  useEffect(() => {
-    if (!socket.current) {
-      socket.current = io(apiUrl, {
-        transports: ["websocket", "polling"],
-      });
-
-      socket.current.on("connect", () => {
-        console.log("Connected to Socket.IO server");
-      });
-
-      // Handle real-time updates from the server
-      socket.current.on("update_message", (data) => {
-        console.log("Real-time update received:", data);
-        // Update camera list or other data if necessary
-      });
-    }
-
-    // Clean up socket connection on unmount
-    return () => {
-      socket.current?.disconnect();
-      socket.current = null;
-    };
-  }, [apiUrl]);
-
-  useEffect(() => {
-    fetchCameras(); // Fetch cameras on component mount
-  }, []);
-
-  useEffect(() => {
-    // Trigger HLS stream for each camera once fetched
-    cameras.forEach((camera) => {
-      startHlsStream(camera.id); // Start HLS stream for each camera
-    });
-  }, [cameras]); // Trigger when cameras are fetched or updated
-
-  // Function to initialize HLS for a specific camera
-  const initializeHls = (streamUrl, videoElement) => {
+  // Function to initialize RTMP stream using video.js
+  const initializeRtmpStream = (streamUrl, videoElement) => {
     if (!videoElement) return;
 
-    // Create a new HLS instance for each video element
-    const hlsInstance = new Hls({
-      maxBufferLength: 10,
-      maxBufferSize: 100 * 1024,
-      maxMaxBufferLength: 15,
-      lowLatencyMode: true,
-      liveSyncDuration: 2,
-      liveMaxLatencyDuration: 3,
-      levelLoadingMaxRetry: 3,
+    // Initialize video.js player for RTMP
+    const player = videojs(videoElement, {
+      techOrder: ['flash', 'html5'],
+      sources: [
+        {
+          type: "rtmp/mp4",
+          src: streamUrl,
+        },
+      ],
     });
 
+    // Play the stream
+    player.play();
+
+    // Clean up when component unmounts or video changes
+    return () => {
+      player.dispose();
+    };
+  };
+
+  // Function to initialize HLS stream
+  const initializeHlsStream = (streamUrl, videoElement) => {
+    if (!videoElement) return;
+
+    const hlsInstance = new Hls();
     hlsInstance.loadSource(streamUrl);
     hlsInstance.attachMedia(videoElement);
 
-    // Listen for the MANIFEST_PARSED event to play the video
     hlsInstance.on(Hls.Events.MANIFEST_PARSED, () => {
       if (videoElement.paused) {
         videoElement.play();
       }
     });
 
-    // Handle errors in the HLS instance
     hlsInstance.on(Hls.Events.ERROR, (event, data) => {
       if (data.fatal) {
-        switch (data.type) {
-          case Hls.ErrorTypes.NETWORK_ERROR:
-            console.error("HLS network error, retrying...");
-            setTimeout(() => {
-              hlsInstance.loadSource(streamUrl);
-              hlsInstance.attachMedia(videoElement);
-            }, 3000);
-            break;
-          case Hls.ErrorTypes.MEDIA_ERROR:
-            hlsInstance.recoverMediaError();
-            break;
-          default:
-            hlsInstance.destroy();
-            break;
-        }
+        console.error("Error occurred in HLS stream:", data);
       }
     });
 
-    // Clean up the HLS instance when the component unmounts or when a video ref changes
     return () => {
       hlsInstance.destroy();
     };
   };
+
+  useEffect(() => {
+    fetchCameras(); // Fetch cameras on component mount
+  }, []);
+
+  useEffect(() => {
+    // Trigger stream for each camera once fetched
+    cameras.forEach((camera) => {
+      if (isHlsStream) {
+        startHlsStream(camera.id); // Start HLS stream if enabled
+      }
+    });
+  }, [cameras, isHlsStream]); // Trigger when cameras are fetched or updated
 
   return (
     <div className="command-center">
@@ -127,22 +105,53 @@ function CommandCenter() {
           <div key={camera.id} className="camera-card">
             <h4>{camera.name}</h4>
             <p>Location: {camera.location}</p>
-            <video
-              controls
-              autoPlay
-              muted
-              ref={(video) => {
-                console.log("Video element:", video);
-                if (video) {
-                  // Initialize HLS for the video element
-                  initializeHls(
-                    `http://localhost:5000/commandCenter/videos/${camera.id}/stream.m3u8`,
-                    video
-                  );
-                }
-              }}
-              style={{ width: "100%", maxHeight: "300px" }}
-            ></video>
+
+            <div className="stream-toggle">
+              <label>
+                <input
+                  type="radio"
+                  name={`stream-type-${camera.id}`}
+                  checked={isHlsStream}
+                  onChange={() => setIsHlsStream(true)}
+                />
+                HLS
+              </label>
+              <label>
+                <input
+                  type="radio"
+                  name={`stream-type-${camera.id}`}
+                  checked={!isHlsStream}
+                  onChange={() => setIsHlsStream(false)}
+                />
+                RTMP
+              </label>
+            </div>
+
+            <div className="video-wrapper">
+              <video
+                controls
+                autoPlay
+                muted
+                ref={(video) => {
+                  if (video) {
+                    if (isHlsStream) {
+                      initializeHlsStream(
+                        `http://localhost:5000/commandCenter/videos/${camera.id}/stream.m3u8`,
+                        video
+                      );
+                    } else {
+                      // RTMP stream URL
+                      initializeRtmpStream(
+                        `rtmp://localhost:1935/live/${camera.id}`,
+                        video
+                      );
+                    }
+                  }
+                }}
+                className="video-js vjs-default-skin"
+                style={{ width: "100%", maxHeight: "300px" }}
+              ></video>
+            </div>
           </div>
         ))}
       </div>
