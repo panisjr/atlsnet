@@ -7,7 +7,9 @@ import ToastNotification from "../ToastNotification";
 import LogoutModal from "../LogoutModal";
 import SideNavbar from "../SideNavbar";
 import AOS from "aos";
+import config from '../../config'; 
 const AccountManagement = () => {
+  const apiUrl = config.API_URL;
   useEffect(()=>{
     AOS.init({duration:500, easing:"ease-in-out", once:false})
   },[])
@@ -52,7 +54,7 @@ const AccountManagement = () => {
 
     try {
       const response = await axios.post(
-        "http://localhost:5000/users/create_user",
+        `${apiUrl}/users/create_user`,
         {
           user_id,
           firstname,
@@ -97,7 +99,7 @@ const AccountManagement = () => {
   // Fetch users data from the backend
   const fetchUsers = async () => {
     try {
-      const response = await axios.get("http://localhost:5000/users/get_users");
+      const response = await axios.get(`${apiUrl}/users/get_users`);
       setUsers(response.data.users);
       setFilteredUsers(response.data.users); // Initialize filteredUsers
     } catch (error) {
@@ -136,7 +138,7 @@ const AccountManagement = () => {
       }
 
       const response = await axios.delete(
-        `http://localhost:5000/users/delete_user/${userID}`,
+        `${apiUrl}/users/delete_user/${userID}`,
         {
           headers: {
             Authorization: `${token}`, // Ensure the token is prefixed with "Bearer " if your backend expects it
@@ -170,7 +172,7 @@ const AccountManagement = () => {
     try {
       // Send the updated user data in the PUT request
       const response = await axios.put(
-        `http://localhost:5000/users/update_user/${userID}`,
+        `${apiUrl}/users/update_user/${userID}`,
         selected
       );
       setUsers(users.filter((user) => user.id !== userID));
@@ -203,7 +205,7 @@ const AccountManagement = () => {
       const token = sessionStorage.getItem("token");
 
       const response = await axios.put(
-        `http://localhost:5000/users/deactivate_user/${userID}`,
+        `${apiUrl}/users/deactivate_user/${userID}`,
         {},
         {
           headers: {
@@ -231,7 +233,7 @@ const AccountManagement = () => {
     try {
       const token = sessionStorage.getItem("token");
       const response = await axios.put(
-        `http://localhost:5000/users/activate_user/${userID}`,
+        `${apiUrl}/users/activate_user/${userID}`,
         {},
         {
           headers: {

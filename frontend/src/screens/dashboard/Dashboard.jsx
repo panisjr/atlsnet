@@ -7,8 +7,10 @@ import { useTheme } from "../ThemeProvider";
 import "./Dashboard.css";
 import "../css/DarkLightMode.css";
 import DailyCountsChart from "./DailyCountsChart";
+import config from '../../config'; 
 
 const Dashboard = () => {
+  const apiUrl = config.API_URL;
   const [active, setActive] = useState("dashboard");
   // User Evaluation
   const [totalUsers, setTotalUsers] = useState(0);
@@ -39,7 +41,7 @@ const Dashboard = () => {
     navigate("/");
   };
   const fetchTotalUsers = async () => {
-    const response = await axios.get("http://localhost:5000/users/get_users");
+    const response = await axios.get(`${apiUrl}/users/get_users`);
     // Users
     setTotalUsers(response.data.total_users);
     setTodayUsers(response.data.daily_count);
@@ -74,7 +76,7 @@ const Dashboard = () => {
   const fetchDailyCounts = async () => {
     try {
       const response = await axios.get(
-        "http://localhost:5000/videos/daily_counts"
+        `${apiUrl}/videos/daily_counts`
       );
       setDailyData(response.data);
       console.log("Fetched daily counts:", response.data);

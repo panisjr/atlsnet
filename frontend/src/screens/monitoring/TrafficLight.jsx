@@ -5,7 +5,7 @@ import { io } from "socket.io-client";
 import StaticTrafficLights from "./StaticTrafficLights";
 import DynamicTrafficLights from "./DynamicTrafficLights";
 // import { useStream } from "../StreamProvider";
-const TrafficLight = ({ groupedByDay, road, api, trafficLightSettings }) => {
+const TrafficLight = ({ groupedByDay, road, apiUrl, trafficLightSettings }) => {
   // For React Context Streaming
   // const { streaming, setStreaming, counting, setCounting } = useStream();
   // State management
@@ -94,15 +94,15 @@ const TrafficLight = ({ groupedByDay, road, api, trafficLightSettings }) => {
 
   const startCounting = async () => {
     const { camera_id: selectedCameraId } = road.camera_info || {};
-    if (!selectedCameraId || !api) {
-      console.error("Camera ID or API is missing");
+    if (!selectedCameraId || !apiUrl) {
+      console.error("Camera ID or apiUrl is missing");
       alert("Please select a camera first.");
       return;
     }
 
     try {
       const { data } = await axios.post(
-        `${api}/videos/start_counting/${selectedCameraId}`
+        `${apiUrl}/videos/start_counting/${selectedCameraId}`
       );
       console.log(data.message);
     } catch (error) {
@@ -112,14 +112,14 @@ const TrafficLight = ({ groupedByDay, road, api, trafficLightSettings }) => {
 
   const startHLS = async () => {
     const { camera_id: selectedCameraId } = road.camera_info || {};
-    if (!selectedCameraId || !api) {
+    if (!selectedCameraId || !apiUrl) {
       alert("Please select a camera first.");
       return;
     }
 
     try {
       const { data } = await axios.post(
-        `${api}/videos/start_hls/${selectedCameraId}`
+        `${apiUrl}/videos/start_hls/${selectedCameraId}`
       );
       console.log(data.message);
       setCounting(true); // Update the global counting state

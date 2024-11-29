@@ -3,16 +3,16 @@ import Hls from "hls.js";
 import { io } from "socket.io-client";
 import axios from "axios";
 import "./CommandCenter.css";
+import config from '../../config'; 
 function CommandCenter() {
   const [cameras, setCameras] = useState([]); // Store the list of active cameras
   const socket = useRef(null);
 
-  const api = "http://localhost:5000"; // Replace with your API base URL
-
+  const apiUrl = config.API_URL;
   // Fetch all cameras from the backend
   const fetchCameras = async () => {
     try {
-      const response = await axios.get(`${api}/intersections/get_cameras`);
+      const response = await axios.get(`${apiUrl}/intersections/get_cameras`);
       setCameras(response.data);
     } catch (error) {
       console.error("Error fetching cameras:", error);
@@ -23,7 +23,7 @@ function CommandCenter() {
   const startHlsStream = async (cameraId) => {
     try {
       const response = await axios.post(
-        `${api}/commandCenter/videos/start_hls/${cameraId}`
+        `${apiUrl}/commandCenter/videos/start_hls/${cameraId}`
       );
       console.log(response.data.message);
     } catch (error) {
@@ -34,7 +34,7 @@ function CommandCenter() {
   // Initialize Socket.IO connection
   useEffect(() => {
     if (!socket.current) {
-      socket.current = io(api, {
+      socket.current = io(apiUrl, {
         transports: ["websocket", "polling"],
       });
 
@@ -54,7 +54,7 @@ function CommandCenter() {
       socket.current?.disconnect();
       socket.current = null;
     };
-  }, [api]);
+  }, [apiUrl]);
 
   useEffect(() => {
     fetchCameras(); // Fetch cameras on component mount

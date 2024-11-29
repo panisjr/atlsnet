@@ -1,17 +1,18 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-
+import config from '../../config'; 
 const TrafficLightStatus = () => {
   const [trafficLights, setTrafficLights] = useState([]);
   const [north, setNorth] = useState(null);
   const [south, setSouth] = useState(null);
   const [east, setEast] = useState(null);
   const [west, setWest] = useState(null);
+  const apiUrl = config.API_URL;
 
   useEffect(() => {
     // Fetch traffic light settings from the Flask API
     axios
-      .get('http://localhost:5000/pyduino/get_trafficLight') // Adjust the URL based on your API configuration
+      .get(`${apiUrl}/pyduino/get_trafficLight`) // Adjust the URL based on your API configuration
       .then((response) => {
         const trafficLightsData = response.data;
         setTrafficLights(trafficLightsData);
@@ -113,7 +114,7 @@ const TrafficLightStatus = () => {
     if (isWithinTimeRange) {
       // Send the data to the backend
       axios
-        .post('http://localhost:5000/pyduino/set-green-timer', { lights: lightsToSend }) // Send array of lights data
+        .post(`${apiUrl}/pyduino/set-green-timer`, { lights: lightsToSend }) // Send array of lights data
         .then((response) => {
           console.log('Green timers sent successfully:', response.data);
   

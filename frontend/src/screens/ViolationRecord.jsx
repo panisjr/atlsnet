@@ -3,7 +3,9 @@ import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import SideNavbar from "./SideNavbar";
 
+import config from '../config'; 
 const ViolationRecord = () => {
+  const apiUrl = config.API_URL;
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(null);
   const [showMessage, setShowMessage] = useState(false);
@@ -33,7 +35,7 @@ const ViolationRecord = () => {
 
     try {
       const response = await axios.post(
-        "http://localhost:5000/ocr/upload",
+        `${apiUrl}/ocr/upload`,
         formData,
         {
           headers: {
@@ -63,7 +65,7 @@ const ViolationRecord = () => {
     try {
       const token = sessionStorage.getItem("token");
       const response = await axios.delete(
-        `http://localhost:5000/ocr/delete_image/${id}`,
+        `${apiUrl}/ocr/delete_image/${id}`,
         {
           headers: {
             Authorization: `${token}`,
@@ -92,7 +94,7 @@ const ViolationRecord = () => {
   const navigate = useNavigate();
   const fetchImages = async () => {
     try {
-      const response = await axios.get("http://localhost:5000/ocr/images"); // Adjust the URL as needed
+      const response = await axios.get(`${apiUrl}/ocr/images`); // Adjust the URL as needed
 
       setImages(response.data);
     } catch (error) {

@@ -6,12 +6,10 @@ import LogoutModal from "../LogoutModal";
 import SideNavbar from "../SideNavbar";
 import "./Monitoring.css";
 import CommandCenter from "./CommandCenter";
-// Get current day as a string, e.g., "Monday"
-const getCurrentDay = () => {
-  return new Date().toLocaleDateString("en-US", { weekday: "long" });
-};
+import config from '../../config'; 
+
 const Monitoring = () => {
-  const api = "http://localhost:5000";
+  const apiUrl = config.API_URL;
   // State variables
   const [selectedFiles, setSelectedFiles] = useState([null, null, null, null]);
   const [processedVideoUrls, setProcessedVideoUrls] = useState([
@@ -126,7 +124,7 @@ const Monitoring = () => {
       const formData = new FormData();
       formData.append("video_file", selectedFiles[index]);
 
-      const response = await axios.post(`${api}/videos/video_feed`, formData, {
+      const response = await axios.post(`${apiUrl}/videos/video_feed`, formData, {
         headers: {
           "Content-Type": "multipart/form-data",
         },
@@ -148,7 +146,7 @@ const Monitoring = () => {
 
       // Get processed video URL
       const processedVideoResponse = await axios.get(
-        `${api}/videos/processed_video`,
+        `${apiUrl}/videos/processed_video`,
         {
           responseType: "blob",
         }
@@ -239,12 +237,12 @@ const Monitoring = () => {
   // NEW ADDED CODES
   const [weekPlan, setWeekPlan] = useState([]);
   const fetchWeekPlan = async () => {
-    const response = await axios.get(`${api}/weekPlan/get_weekPlan`);
+    const response = await axios.get(`${apiUrl}/weekPlan/get_weekPlan`);
     setWeekPlan(response.data);
   };
   const [trafficLightSettings, setTrafficLightSettings] = useState([]);
   const fetchTrafficLightSetting = async () => {
-    const response = await axios.get(`${api}/weekPlan/get_trafficLight`);
+    const response = await axios.get(`${apiUrl}/weekPlan/get_trafficLight`);
     setTrafficLightSettings(response.data);
   };
   const groupedByDay = trafficLightSettings.reduce((acc, light) => {
@@ -259,14 +257,14 @@ const Monitoring = () => {
 
   // Video Upload for vehicle counting
   const fetchVideo = async () => {
-    const response = await axios.get(`${api}/videos/get_videos`);
+    const response = await axios.get(`${apiUrl}/videos/get_videos`);
     setVidSrc(response.data);
   };
   // DELETE IMAGE
   const deleteVideo = async (id) => {
     try {
       const token = sessionStorage.getItem("token");
-      const response = await axios.delete(`${api}/videos/delete_video/${id}`, {
+      const response = await axios.delete(`${apiUrl}/videos/delete_video/${id}`, {
         headers: {
           Authorization: `${token}`,
         },
@@ -357,7 +355,7 @@ const Monitoring = () => {
                       key={road.week_plan_id}
                       groupedByDay={groupedByDay}
                       road={road}
-                      api={api}
+                      apiUrl={apiUrl}
                       trafficLightSettings={trafficLightSettings}
                     />
                   ))

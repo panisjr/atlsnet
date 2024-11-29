@@ -1,6 +1,6 @@
 import axios from "axios";
 import React, { useState, useEffect } from "react";
-
+import config from '../../config'; 
 const StaticTrafficLights = ({
   staticLights,
   currentTimerIndex,
@@ -8,6 +8,7 @@ const StaticTrafficLights = ({
   delayCountdown,
   countdown,
 }) => {
+  const apiUrl = config.API_URL;
   const [isGreenTimerSent, setIsGreenTimerSent] = useState(false); // Flag to track if Green Timer is sent
 
   // Function to send Green Timer to the Arduino
@@ -30,7 +31,7 @@ const StaticTrafficLights = ({
       const greenTimer = timerSegments[0]?.timer || 0;
 
       // Send the Green Timer to Arduino
-      const response = await axios.post("http://localhost:5000/pyduino/set-green-timer", {
+      const response = await axios.post(`${apiUrl}/pyduino/set-green-timer`, {
         lightName: traffic_light_name,
         greenTimer: greenTimer,
       });

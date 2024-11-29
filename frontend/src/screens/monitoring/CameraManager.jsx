@@ -1,13 +1,15 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 
+import config from '../../config'; 
 const CameraManager = ({ selectedCameraId, setSelectedCameraId }) => {
   const [cameras, setCameras] = useState([]);
-  const api = "http://localhost:5000";
+  const apiUrl = config.API_URL;
+
   useEffect(() => {
     const fetchCameras = async () => {
       try {
-        const response = await axios.get(`${api}/intersections/get_cameras`);
+        const response = await axios.get(`${apiUrl}/intersections/get_cameras`);
         setCameras(response.data);
       } catch (error) {
         console.error("Error fetching cameras:", error);
@@ -25,7 +27,7 @@ const CameraManager = ({ selectedCameraId, setSelectedCameraId }) => {
   //     if (selectedCameraId) {
   //       try {
   //         const response = await axios.get(
-  //           `${api}/videos/start_counting/${selectedCameraId}`
+  //           `${apiUrl}/videos/start_counting/${selectedCameraId}`
   //         );
   //         console.log(response.data.message); // Display success message
   //       } catch (error) {
@@ -40,7 +42,7 @@ const CameraManager = ({ selectedCameraId, setSelectedCameraId }) => {
   //     if (selectedCameraId) {
   //       try {
   //         const response = await axios.post(
-  //           `${api}/videos/start_hls/${selectedCameraId}`
+  //           `${apiUrl}/videos/start_hls/${selectedCameraId}`
   //         );
   //         console.log(response.data.message); // Display success message
   //       } catch (error) {

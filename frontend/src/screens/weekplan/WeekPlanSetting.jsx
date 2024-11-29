@@ -8,8 +8,9 @@ import "./WeekPlanSetting.css";
 import SideNavbar from "../SideNavbar";
 import CameraManager from "../monitoring/CameraManager";
 import IntersectionModals from "./IntersectionModals";
+import config from '../../config'; 
 const WeekPlanSetting = () => {
-  const api = "http://localhost:5000";
+  const apiUrl = config.API_URL;
   // Search bar
   const [searchQuery, setSearchQuery] = useState("");
   const [filteredIntersection, setFilteredIntersection] = useState([]);
@@ -69,7 +70,7 @@ const WeekPlanSetting = () => {
   }, []);
   // START OF INTERSECTION
   const fetchIntersection = async () => {
-    const response = await axios.get(`${api}/intersections/get_intersections`);
+    const response = await axios.get(`${apiUrl}/intersections/get_intersections`);
     setIntersection(response.data);
     setFilteredIntersection(response.data);
   };
@@ -77,7 +78,7 @@ const WeekPlanSetting = () => {
     event.preventDefault();
     try {
       const response = await axios.post(
-        `${api}/intersections/add_intersections`,
+        `${apiUrl}/intersections/add_intersections`,
         {
           newIntersection,
         }
@@ -107,7 +108,7 @@ const WeekPlanSetting = () => {
       const token = sessionStorage.getItem("token");
 
       const response = await axios.put(
-        `${api}/intersections/update_intersections/${id}`,
+        `${apiUrl}/intersections/update_intersections/${id}`,
         { intersection_name: selected.intersection_name },
         {
           headers: {
@@ -139,7 +140,7 @@ const WeekPlanSetting = () => {
       const token = sessionStorage.getItem("token"); // Ensure this key matches the one used when storing the token
 
       const response = await axios.delete(
-        `${api}/intersections/delete_intersection/${id}`,
+        `${apiUrl}/intersections/delete_intersection/${id}`,
         {
           headers: {
             Authorization: `${token}`, // Ensure the token is prefixed with "Bearer " if your backend expects it
@@ -168,12 +169,12 @@ const WeekPlanSetting = () => {
   // START OF WEEK PLAN
   // GET WEEK PLAN
   const fetchWeekPlan = async () => {
-    const response = await axios.get(`${api}/weekPlan/get_weekPlan`);
+    const response = await axios.get(`${apiUrl}/weekPlan/get_weekPlan`);
     setWeekPlan(response.data);
     console.log(response.data);
   };
   const fetchTrafficLightSetting = async () => {
-    const response = await axios.get(`${api}/weekPlan/get_trafficLight`);
+    const response = await axios.get(`${apiUrl}/weekPlan/get_trafficLight`);
     setTrafficLightSetting(response.data);
   };
   // ADD WEEK PLAN
@@ -200,7 +201,7 @@ const WeekPlanSetting = () => {
         selectedCameraId: selectedCameraId,
       };
       const response = await axios.post(
-        `${api}/weekPlan/add_weekPlan/${id}`,
+        `${apiUrl}/weekPlan/add_weekPlan/${id}`,
         dataToSend
       );
       setShowMessage(true);
@@ -236,7 +237,7 @@ const WeekPlanSetting = () => {
         }, 3000);
       }
       const response = await axios.delete(
-        `${api}/weekPlan/delete_weekPlan/${id}`,
+        `${apiUrl}/weekPlan/delete_weekPlan/${id}`,
         {
           headers: {
             Authorization: `${token}`, // Ensure the token is prefixed with "Bearer " if your backend expects it
@@ -269,7 +270,7 @@ const WeekPlanSetting = () => {
       const token = sessionStorage.getItem("token");
 
       const response = await axios.put(
-        `${api}/trafficLight/update_trafficLight/${id}`,
+        `${apiUrl}/trafficLight/update_trafficLight/${id}`,
         {
           traffic_light_timer: selected.traffic_light_timer,
         },
@@ -396,7 +397,7 @@ const WeekPlanSetting = () => {
 
     try {
       const response = await axios.post(
-        `${api}/weekPlan/set_trafficLight/${id}`,
+        `${apiUrl}/weekPlan/set_trafficLight/${id}`,
         dataToSend
       );
       setShowMessage(true);
@@ -432,7 +433,7 @@ const WeekPlanSetting = () => {
         }, 3000);
       }
       const response = await axios.delete(
-        `${api}/trafficLight/delete_trafficLight/${id}`,
+        `${apiUrl}/trafficLight/delete_trafficLight/${id}`,
         {
           headers: {
             Authorization: `${token}`, // Ensure the token is prefixed with "Bearer " if your backend expects it
@@ -488,7 +489,7 @@ const WeekPlanSetting = () => {
       };
 
       const response = await axios.post(
-        `${api}/trafficLight/add_trafficLight/${id}/time`,
+        `${apiUrl}/trafficLight/add_trafficLight/${id}/time`,
         dataToSend
       );
       fetchWeekPlan();
@@ -557,13 +558,13 @@ const WeekPlanSetting = () => {
   // =========================== Start of Camera
   const [cameras, setCameras] = useState([]);
   const fetchCameras = async () => {
-    const response = await axios.get(`${api}/intersections/get_cameras`);
+    const response = await axios.get(`${apiUrl}/intersections/get_cameras`);
     setCameras(response.data);
   };
   const addCamera = async () => {
     try {
       const rtsp_url = `rtsp://${username}:${password}@${camera_ip}:${port}/${stream}`;
-      const response = await axios.post(`${api}/intersections/add_camera`, {
+      const response = await axios.post(`${apiUrl}/intersections/add_camera`, {
         name: name,
         rtsp_url: rtsp_url,
         location: location,
@@ -589,7 +590,7 @@ const WeekPlanSetting = () => {
     try {
       const token = sessionStorage.getItem("token");
       const response = await axios.delete(
-        `${api}/intersections/delete_camera/${id}`,
+        `${apiUrl}/intersections/delete_camera/${id}`,
         {
           headers: {
             Authorization: `Bearer ${token}`, // Ensure the token is prefixed with "Bearer " if your backend expects it
@@ -620,7 +621,7 @@ const WeekPlanSetting = () => {
       const rtsp_url = `rtsp://${username}:${password}@${camera_ip}:${port}/${stream}`;
       const token = sessionStorage.getItem("token");
       const response = await axios.put(
-        `${api}/intersections/edit_camera/${id}`,
+        `${apiUrl}/intersections/edit_camera/${id}`,
         {
           name,
           location,
