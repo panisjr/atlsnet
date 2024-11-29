@@ -1,4 +1,4 @@
-from flask import Blueprint, jsonify, request, make_response
+from flask import Blueprint, jsonify, request
 from datetime import datetime, timedelta
 from werkzeug.security import generate_password_hash, check_password_hash
 import jwt
@@ -325,15 +325,8 @@ def update_user(id):
 
 
 # LOGIN USER
-@user_routes.route("/signIn", methods=["POST","OPTIONS"])
+@user_routes.route("/signIn", methods=["POST"])
 def user_login():
-    if request.method == "OPTIONS":
-        # Handle preflight (CORS) request
-        response = make_response()
-        response.headers["Access-Control-Allow-Origin"] = "https://atlsnet.tech"
-        response.headers["Access-Control-Allow-Methods"] = "POST, OPTIONS"
-        response.headers["Access-Control-Allow-Headers"] = "Content-Type, Authorization"
-        return response
     data = request.get_json()
     # Check if email and password are provided
     email = data.get("email")
