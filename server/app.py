@@ -6,9 +6,7 @@ import os
 def create_app():
     app = Flask(__name__)
     CORS(app, origins=["https://atlsnet.tech", "https://www.atlsnet.tech", "https://atlsnetserver.site"])
-    # CORS(app, origins=["https://www.atlsnet.tech", "https://www.atlsnetserver.site"], supports_credentials=True)
     # Initialize database
-    # app.config["SQLALCHEMY_DATABASE_URI"] = f"postgresql://{os.getenv('DB_USER')}:{os.getenv('DB_PASSWORD')}@{os.getenv('DB_HOST')}:5432/{os.getenv('DB_NAME')}"
     app.config["SQLALCHEMY_DATABASE_URI"] = "postgresql://postgres:atlsnet-postgres@atlsnet-sg.cnoq2uo0erkf.ap-southeast-2.rds.amazonaws.com:5432/atlsnetDB"
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
