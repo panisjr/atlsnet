@@ -38,4 +38,4 @@ if __name__ == "__main__":
         db.create_all()  # Create database tables
 
     # Start the server with socketio
-    socketio.run(app, host='0.0.0.0')
+    socketio.run(app, host='0.0.0.0',debug=True)
