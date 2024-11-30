@@ -1,0 +1,54 @@
+name: Deploy to EC2
+
+on:
+  push:
+    branches:
+      - dev  # Trigger this workflow on push to the dev branch
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
+
+    - name: Set up SSH key
+      uses: webfactory/ssh-agent@v0.5.3
+      with:
+        ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+
+    - name: SSH into EC2 and deploy
+      run: |
+        ssh -o StrictHostKeyChecking=no ubuntu@3.107.195.194 << 'EOF'
+          # Stop on errors
+          set -e
+
+          # Define project directory and virtual environment directory
+          PROJECT_DIR="/atlsnet/server"
+          VENV_DIR="$PROJECT_DIR/venv"
+
+          # Change to project directory
+          cd $PROJECT_DIR
+
+          # Pulling latest changes from the dev branch
+          echo "Pulling latest changes from the dev branch..."
+          git fetch origin dev
+          git reset --hard origin/dev
+
+          # Activate the virtual environment
+          echo "Activating virtual environment..."
+          source $VENV_DIR/bin/activate
+
+          # Installing Python dependencies
+          echo "Installing backend dependencies..."
+          pip install --no-cache-dir -r requirements.txt
+
+          # Restarting application and web services
+          echo "Restarting application and web services..."
+          sudo systemctl restart atlsnet
+          sudo systemctl reload nginx
+          sudo systemctl restart nginx
+
+          echo "Deployment complete!"
+        EOF
