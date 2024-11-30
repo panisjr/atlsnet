@@ -259,6 +259,7 @@ const Monitoring = () => {
   const fetchVideo = async () => {
     const response = await axios.get(`${apiUrl}/videos/get_videos`);
     setVidSrc(response.data);
+    console.log(response.data)
   };
   // DELETE IMAGE
   const deleteVideo = async (id) => {
@@ -285,6 +286,7 @@ const Monitoring = () => {
       }, 3000);
     }
   };
+  
   return (
     <>
       <div className="container-fluid  vh-100 vw-100">
@@ -296,7 +298,6 @@ const Monitoring = () => {
               <span className="text-secondary">Pages</span> / Monitoring
             </h6>
             <div className="row monitoringContainer">
-              <CommandCenter /> 
               {/* Lane selection and upload section */}
               <div className="d-flex align-items-center justify-content-center">
                 <select
@@ -347,6 +348,51 @@ const Monitoring = () => {
                       </button>
                     </>
                   )}
+              </div>
+              {/* <CommandCenter />  */}
+              <div>
+                {vidSrc && vidSrc.length > 0 ? (
+                  vidSrc.map((src, index) => (
+                    <div>
+                      <table className="table table-bordered">
+                        <thead>
+                          <th>No.</th>
+                          <th>In Counts</th>
+                          <th>Out Counts</th>
+                          <th>Video</th>
+                          <th></th>
+                        </thead>
+                        <tbody>
+                          <tr key={index}>
+                            <td>{index + 1}</td>
+                            <td>{src.in_counts}</td>
+                            <td>{src.out_counts}</td>
+                            <td>
+                              <video
+                                width="540"
+                                height="260"
+                                autoPlay
+                                loop
+                                muted
+                              >
+                                <source src={src.filename} type="video/mp4" />
+                                Your browser does not support the video tag.
+                              </video>
+                            </td>
+                            <td>
+                              <button
+                                className="btn btn-outline-danger bi bi-trash"
+                                onClick={() => deleteVideo(src.id)}
+                              ></button>
+                            </td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    </div>
+                  ))
+                ) : (
+                  <i>No video</i>
+                )}
               </div>
               <div className="weekPlanContainer">
                 {weekPlan && weekPlan.length > 0 ? (
