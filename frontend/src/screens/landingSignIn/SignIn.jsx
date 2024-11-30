@@ -8,8 +8,8 @@ import "aos/dist/aos.css"; // Import AOS styles
 import ToastNotification from "../ToastNotification";
 import config from '../../config'; 
 const SignIn = () => {
-  // const apiUrl = config.API_URL;
-  const apiUrl = "http://localhost:5000";
+  const apiUrl = config.API_URL;
+  // const apiUrl = "http://localhost:5000";
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [data, setData] = useState("");
