@@ -92,6 +92,7 @@ const DataTable = ({
               )}
 
               <button
+                data-testid="delete-modal"
                 className="btn btn-danger mb-2"
                 data-bs-toggle="modal"
                 data-bs-target="#deleteBackdrop"
@@ -203,7 +204,7 @@ const DataTable = ({
           onClick={() => gotoPage(pageCount - 1)}
           disabled={!canNextPage}
         ></p>
-        
+
         {/* <select
           value={pageSize}
           onChange={(e) => setPageSize(Number(e.target.value))}

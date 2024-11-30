@@ -296,7 +296,7 @@ const Monitoring = () => {
               <span className="text-secondary">Pages</span> / Monitoring
             </h6>
             <div className="row monitoringContainer">
-              <CommandCenter />
+              <CommandCenter /> 
               {/* Lane selection and upload section */}
               <div className="d-flex align-items-center justify-content-center">
                 <select

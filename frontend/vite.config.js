@@ -9,4 +9,12 @@ export default defineConfig({
   define: {
     'process.env': process.env,
   },
+  test: {
+    environment: 'jsdom',
+    globals: true, // Makes testing-library functions like render globally available
+    setupFiles: ['./src/setupTests.ts'], // Optional: For global setup (like jest-dom)
+  },
 });
+
+
+

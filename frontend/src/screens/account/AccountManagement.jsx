@@ -7,12 +7,12 @@ import ToastNotification from "../ToastNotification";
 import LogoutModal from "../LogoutModal";
 import SideNavbar from "../SideNavbar";
 import AOS from "aos";
-import config from '../../config'; 
+import config from "../../config";
 const AccountManagement = () => {
   const apiUrl = config.API_URL;
-  useEffect(()=>{
-    AOS.init({duration:500, easing:"ease-in-out", once:false})
-  },[])
+  useEffect(() => {
+    AOS.init({ duration: 500, easing: "ease-in-out", once: false });
+  }, []);
   const [users, setUsers] = useState([]);
   const [filteredUsers, setFilteredUsers] = useState([]);
   const [searchQuery, setSearchQuery] = useState("");
@@ -53,21 +53,18 @@ const AccountManagement = () => {
     setError(null);
 
     try {
-      const response = await axios.post(
-        `${apiUrl}/users/create_user`,
-        {
-          user_id,
-          firstname,
-          middlename,
-          lastname,
-          email,
-          contact,
-          address,
-          password,
-          role,
-          status,
-        }
-      );
+      const response = await axios.post(`${apiUrl}/users/create_user`, {
+        user_id,
+        firstname,
+        middlename,
+        lastname,
+        email,
+        contact,
+        address,
+        password,
+        role,
+        status,
+      });
       setShowMessage(true);
       setSuccess(response.data.message);
       setFirstname("");
@@ -249,7 +246,7 @@ const AccountManagement = () => {
       }, 3000);
     } catch (error) {
       setShowMessage(true);
-      setError(error.response.data.error);
+      setError(error.response?.data?.error);
       setTimeout(() => {
         setShowMessage(false);
       }, 3000);
@@ -549,6 +546,7 @@ const AccountManagement = () => {
                           onChange={(e) => setUserID(e.target.value)}
                           placeholder="User ID"
                           required
+                          data-testid="user-id-input" // Added data-testid
                         />
                       </div>
                       <div className="input-group mb-3">
@@ -560,6 +558,7 @@ const AccountManagement = () => {
                           onChange={(e) => setFirstname(e.target.value)}
                           placeholder="First Name"
                           required
+                          data-testid="firstname-input" // Added data-testid
                         />
                         <input
                           type="text"
@@ -568,6 +567,7 @@ const AccountManagement = () => {
                           value={middlename}
                           onChange={(e) => setMiddlename(e.target.value)}
                           placeholder="M.N. (Optional)"
+                          data-testid="middlename-input" // Added data-testid
                         />
                         <input
                           type="text"
@@ -577,6 +577,7 @@ const AccountManagement = () => {
                           onChange={(e) => setLastname(e.target.value)}
                           placeholder="Last Name"
                           required
+                          data-testid="lastname-input" // Added data-testid
                         />
                       </div>
 
@@ -589,6 +590,7 @@ const AccountManagement = () => {
                           onChange={(e) => setEmail(e.target.value)}
                           placeholder="Email"
                           required
+                          data-testid="email-input" // Added data-testid
                         />
                       </div>
                       <div className="input-group mb-3">
@@ -600,6 +602,7 @@ const AccountManagement = () => {
                           onChange={(e) => setContact(e.target.value)}
                           placeholder="Contact Number"
                           required
+                          data-testid="contact-input" // Added data-testid
                         />
                       </div>
                       <div className="input-group mb-3">
@@ -611,6 +614,7 @@ const AccountManagement = () => {
                           onChange={(e) => setAddress(e.target.value)}
                           placeholder="Address"
                           required
+                          data-testid="address-input" // Added data-testid
                         />
                       </div>
                       <div className="input-group mb-3">
@@ -622,6 +626,7 @@ const AccountManagement = () => {
                           onChange={(e) => setPassword(e.target.value)}
                           placeholder="Password"
                           required
+                          data-testid="password-input" // Added data-testid
                         />
                         <button
                           type="button"
@@ -643,6 +648,7 @@ const AccountManagement = () => {
                           className="form-select"
                           value={role}
                           onChange={(e) => handleRoleChange(e.target.value)}
+                          data-testid="role-select" // Added data-testid
                         >
                           <option value="User">User</option>
                           <option value="Admin">Admin</option>
@@ -654,11 +660,18 @@ const AccountManagement = () => {
                           type="button"
                           className="btn btn-secondary"
                           data-bs-dismiss="modal"
+                          data-testid="cancel-button" // Added data-testid
                         >
                           <i className="bi bi-x me-2"></i>
                           Cancel
                         </button>
-                        <button type="submit" className="btn btn-success">
+                        <button
+                          type="submit"
+                          className="btn btn-success"
+                          data-testid="submit-button"
+                        >
+                          {" "}
+                          {/* Added data-testid */}
                           <i className="bi bi-check2 me-2"></i>
                           Create
                         </button>
@@ -679,7 +692,7 @@ const AccountManagement = () => {
               aria-labelledby="staticBackdropLabel"
               aria-hidden="true"
             >
-              <div className="modal-dialog">
+              <div role="dialog" className="modal-dialog">
                 <div className="modal-content">
                   <div className="modal-header bg-danger border-bottom-0 text-white align-items-center justify-content-center">
                     <div className="d-flex align-items-center justify-content-center">
@@ -731,6 +744,7 @@ const AccountManagement = () => {
                           Cancel
                         </button>
                         <button
+                          data-testid="confirm-delete-button"
                           onClick={() => handleDelete(selected.id)}
                           className="btn btn-danger"
                           data-bs-dismiss="modal"
@@ -750,6 +764,7 @@ const AccountManagement = () => {
             <div
               className="modal fade"
               id="statusBackDrop"
+              data-testid="status-modal"
               data-bs-backdrop="static"
               data-bs-keyboard="false"
               tabIndex="-1"
@@ -834,33 +849,27 @@ const AccountManagement = () => {
                           <i className="bi bi-x me-2"></i>
                           Cancel
                         </button>
-                        {selected.status == "Active" ? (
-                          <button
-                            onClick={() => handleDeactivate(selected.id)}
-                            className={`btn ${
-                              selected.status == "Active"
-                                ? "btn-orange"
-                                : "btn-success"
-                            }`}
-                            data-bs-dismiss="modal"
-                          >
-                            <i className="bi bi-check me-2"></i>
-                            Yes, Deactivate
-                          </button>
-                        ) : (
-                          <button
-                            onClick={() => handleActivate(selected.id)}
-                            className={`btn ${
-                              selected.status == "Active"
-                                ? "btn-orange"
-                                : "btn-success"
-                            }`}
-                            data-bs-dismiss="modal"
-                          >
-                            <i className="bi bi-check me-2"></i>
-                            Yes, Activate
-                          </button>
-                        )}
+                        <button
+                          data-testid="activate-deactivate-button"
+                          onClick={() => {
+                            if (selected.status === "Active") {
+                              handleDeactivate(selected.id);
+                            } else {
+                              handleActivate(selected.id);
+                            }
+                          }}
+                          className={`btn ${
+                            selected.status === "Active"
+                              ? "btn-orange"
+                              : "btn-success"
+                          }`}
+                          data-bs-dismiss="modal"
+                        >
+                          <i className="bi bi-check me-2"></i>
+                          {selected.status === "Active"
+                            ? "Yes, Deactivate"
+                            : "Yes, Activate"}
+                        </button>
                       </div>
                     </div>
                   ) : (
