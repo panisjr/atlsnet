@@ -5,7 +5,11 @@ from routes import main_routes  # Import the main_routes blueprint
 import os
 def create_app():
     app = Flask(__name__)
+<<<<<<< HEAD
     CORS(app, origins=["https://atlsnet.tech", "https://www.atlsnet.tech", "https://atlsnetserver.site"])
+=======
+    CORS(app, origins=["https://atlsnet.tech", "https://dev.atlsnet.tech", "https://www.atlsnet.tech", "https://atlsnetserver.site"])
+>>>>>>> dev
     # Initialize database
     app.config["SQLALCHEMY_DATABASE_URI"] = "postgresql://postgres:atlsnet-postgres@atlsnet-sg.cnoq2uo0erkf.ap-southeast-2.rds.amazonaws.com:5432/atlsnetDB"
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
