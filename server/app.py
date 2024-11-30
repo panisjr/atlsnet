@@ -28,7 +28,7 @@ app = create_app()
 
 # Initialize socketio with the app
 socketio.init_app(app)  
-
+# huhuhu
 if __name__ == "__main__":
     # Create database tables (ensure the database is properly connected)
     with app.app_context():
