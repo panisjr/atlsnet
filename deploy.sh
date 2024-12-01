@@ -11,6 +11,8 @@ cd $PROJECT_DIR
 
 # Pulling latest changes from the dev branch
 echo "Pulling latest changes from the dev branch..."
+# Use SSH for authentication
+git remote set-url origin git@github.com:panisjr/atlsnet.git
 git checkout main
 git pull origin main
 git push origin main
