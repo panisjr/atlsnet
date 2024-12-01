@@ -363,8 +363,11 @@ const WeekPlanSetting = () => {
     if (item === "dashboard") {
       navigate("/dashboard");
     }
-    if (item === "monitoring") {
-      navigate("/monitoring");
+    if (item === "cctvMonitoring") {
+      navigate("/cctvMonitoring");
+    }
+    if (item === "trafficLightStatus") {
+      navigate("/trafficLightStatus");
     }
     if (item === "accounts") {
       navigate("/accounts");

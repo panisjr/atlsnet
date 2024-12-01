@@ -1,7 +1,7 @@
 import axios from "axios";
 import React, { useState, useEffect } from "react";
 import config from '../../config'; 
-import TrafficLightStatus from "./TrafficLightStatus";
+import TrafficLightActive from "./TrafficLightActive";
 const StaticTrafficLights = ({
   staticLights,
   currentTimerIndex,
@@ -70,7 +70,7 @@ const StaticTrafficLights = ({
   return (
     <>
       <h6>Active Static Traffic Lights</h6>
-      <TrafficLightStatus/>
+      <TrafficLightActive/>
       {staticLights ? (
         staticLights
           .filter(

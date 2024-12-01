@@ -145,8 +145,8 @@ const DataTable = ({
       <div className="tableContainer">
         <table {...getTableProps()} className="table table-striped">
           <thead>
-            {headerGroups.map((headerGroup) => (
-              <tr {...headerGroup.getHeaderGroupProps()}>
+            {headerGroups.map((headerGroup,index) => (
+              <tr key={index + 1} {...headerGroup.getHeaderGroupProps()}>
                 {headerGroup.headers.map((column) => (
                   column.render("Header") !== "" && 
                   <th {...column.getHeaderProps(column.getSortByToggleProps())}>

@@ -4,10 +4,7 @@ import Hls from "hls.js";
 import { io } from "socket.io-client";
 import StaticTrafficLights from "./StaticTrafficLights";
 import DynamicTrafficLights from "./DynamicTrafficLights";
-// import { useStream } from "../StreamProvider";
 const TrafficLight = ({ groupedByDay, road, apiUrl, trafficLightSettings }) => {
-  // For React Context Streaming
-  // const { streaming, setStreaming, counting, setCounting } = useStream();
   // State management
   const [inCounts, setInCounts] = useState(0);
   const [outCounts, setOutCounts] = useState(0);
@@ -122,9 +119,8 @@ const TrafficLight = ({ groupedByDay, road, apiUrl, trafficLightSettings }) => {
         `${apiUrl}/videos/start_hls/${selectedCameraId}`
       );
       console.log(data.message);
-      setCounting(true); // Update the global counting state
       // Update the HLS stream URL after starting the stream
-      const updatedHlsStreamUrl = `http://localhost:5000/hls/${selectedCameraId}/stream.m3u8`;
+      const updatedHlsStreamUrl = `${apiUrl}/hls/${selectedCameraId}/stream.m3u8`;
       setHlsStreamUrl(updatedHlsStreamUrl); // Update state with the new URL
       setStreaming(true); // Update the global streaming state
     } catch (error) {
@@ -223,7 +219,7 @@ const TrafficLight = ({ groupedByDay, road, apiUrl, trafficLightSettings }) => {
 
   useEffect(() => {
     // Initialize Socket.IO connection to receive real-time object counts
-    socket.current = io("http://localhost:5000", {
+    socket.current = io(`${apiUrl}`, {
       transports: ["websocket", "polling"],
     });
 
