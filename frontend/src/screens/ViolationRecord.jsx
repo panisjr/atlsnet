@@ -4,6 +4,7 @@ import axios from "axios";
 import SideNavbar from "./SideNavbar";
 
 import config from '../config'; 
+import LogoutModal from "./LogoutModal";
 const ViolationRecord = () => {
   const apiUrl = config.API_URL;
   const [error, setError] = useState(null);
