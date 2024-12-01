@@ -250,7 +250,7 @@ def process_video_frame():
         # Initialize video writer
         video_writer = cv2.VideoWriter(
             processed_video_path,
-            cv2.VideoWriter_fourcc(*"mp4v"),  # Use "mp4v" for wider compatibility
+            cv2.VideoWriter_fourcc(*"avc1"),  # Use "mp4v" for wider compatibility
             fps,
             (width, height),
         )
