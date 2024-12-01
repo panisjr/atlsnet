@@ -267,7 +267,7 @@ const LandingPage = () => {
                   <div className="row d-flex justify-content-between align-items-center">
                     <div className="col-lg-5" data-aos="fade-right">
                       <h3 className="py-5 border-top border-dark">
-                        Our magic numbers
+                        {/* Our magic numbers */}
                       </h3>
                     </div>
                     <div className="col-lg-6">
