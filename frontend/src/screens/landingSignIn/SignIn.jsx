@@ -145,12 +145,12 @@ const SignIn = () => {
                   <ul class="list-unstyled">
                     <li>
                       <a href="https://mail.google.com" class="text-light">
-                        Email Us <span className="ms-5">atls@gmail.com</span>
+                        Email Us <span className="ms-5">atlsnet@gmail.com</span>
                       </a>
                     </li>
                     <li>
                       <a href="#" class="text-light">
-                        Location <span className="ms-5">example</span>
+                        Location <span className="ms-5">Tacloban City</span>
                       </a>
                     </li>
                   </ul>

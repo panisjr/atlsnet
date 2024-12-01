@@ -123,7 +123,7 @@ const Monitoring = () => {
     try {
       const formData = new FormData();
       formData.append("video_file", selectedFiles[index]);
-
+  
       const response = await axios.post(`${apiUrl}/videos/video_feed`, formData, {
         headers: {
           "Content-Type": "multipart/form-data",
@@ -136,17 +136,17 @@ const Monitoring = () => {
           setUploadProgress(progress); // Update upload progress
         },
       });
-      const { in_counts, out_counts, video_file } = response.data;
-
+      const { in_counts, out_counts, video_file, video_id } = response.data;
+  
       // Update counts state
       setCounts((prevCounts) => ({
         ...prevCounts,
         [index]: { in_counts, out_counts },
       }));
-
-      // Get processed video URL
+  
+      // Get processed video URL using the video_id
       const processedVideoResponse = await axios.get(
-        `${apiUrl}/videos/processed_video`,
+        `${apiUrl}/videos/processed_video/${video_id}`, // Pass the video_id here
         {
           responseType: "blob",
         }
@@ -155,17 +155,17 @@ const Monitoring = () => {
         type: "video/mp4",
       });
       const processedVideoUrl = URL.createObjectURL(processedVideoBlob);
-
+  
       // Update processed video URLs state
       const newProcessedVideoUrls = [...processedVideoUrls];
       newProcessedVideoUrls[index] = processedVideoUrl;
       setProcessedVideoUrls(newProcessedVideoUrls);
-
+  
       // Set initial countdown for the lane
       const newCountdowns = [...countdowns];
       newCountdowns[index] = { value: in_counts * 3, slow: false };
       setCountdowns(newCountdowns);
-
+  
       // Clear any previous error messages
       setErrorMessages((prevErrors) => {
         const newErrors = [...prevErrors];
@@ -180,9 +180,9 @@ const Monitoring = () => {
         newErrors[index] = "Failed to upload and process video.";
         return newErrors;
       });
-
+  
       console.error("Error uploading and processing video:", error);
-
+  
       // Clear error message after 2 seconds
       setTimeout(() => {
         setErrorMessages((prevErrors) => {
@@ -197,6 +197,7 @@ const Monitoring = () => {
       setUploadProgress(0);
     }
   };
+  
 
   // Function to handle lane deletion
   const handleDelete = (index) => {
@@ -349,7 +350,7 @@ const Monitoring = () => {
                     </>
                   )}
               </div>
-              {/* <CommandCenter />  */}
+              <CommandCenter /> 
               <div>
                 {vidSrc && vidSrc.length > 0 ? (
                   vidSrc.map((src, index) => (
