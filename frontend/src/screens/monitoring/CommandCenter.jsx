@@ -4,11 +4,14 @@ import { io } from "socket.io-client";
 import axios from "axios";
 import "./CommandCenter.css";
 import config from '../../config'; 
+
 function CommandCenter() {
   const [cameras, setCameras] = useState([]); // Store the list of active cameras
   const socket = useRef(null);
+  const hlsInstances = useRef({}); // Store HLS instances for cleanup
 
   const apiUrl = config.API_URL;
+
   // Fetch all cameras from the backend
   const fetchCameras = async () => {
     try {
@@ -34,7 +37,7 @@ function CommandCenter() {
   // Initialize Socket.IO connection
   useEffect(() => {
     if (!socket.current) {
-      socket.current = io(apiUrl, {
+      socket.current = io(`${apiUrl}`, {
         transports: ["websocket", "polling"],
       });
 
@@ -45,7 +48,7 @@ function CommandCenter() {
       // Handle real-time updates from the server
       socket.current.on("update_message", (data) => {
         console.log("Real-time update received:", data);
-        // Update camera list or other data if necessary
+        // Example: Update camera list if needed
       });
     }
 
@@ -69,9 +72,13 @@ function CommandCenter() {
 
   // Function to initialize HLS for a specific camera
   const initializeHls = (streamUrl, videoElement) => {
-    if (!videoElement) return;
+    if (!videoElement || !Hls.isSupported()) return;
 
-    // Create a new HLS instance for each video element
+    // Check if an instance already exists to avoid recreating it
+    if (hlsInstances.current[videoElement.src]) {
+      hlsInstances.current[videoElement.src].destroy();
+    }
+
     const hlsInstance = new Hls({
       maxBufferLength: 10,
       maxBufferSize: 100 * 1024,
@@ -113,9 +120,13 @@ function CommandCenter() {
       }
     });
 
+    // Store the HLS instance for cleanup
+    hlsInstances.current[videoElement.src] = hlsInstance;
+
     // Clean up the HLS instance when the component unmounts or when a video ref changes
     return () => {
       hlsInstance.destroy();
+      delete hlsInstances.current[videoElement.src];
     };
   };
 
@@ -132,11 +143,10 @@ function CommandCenter() {
               autoPlay
               muted
               ref={(video) => {
-                console.log("Video element:", video);
                 if (video) {
                   // Initialize HLS for the video element
                   initializeHls(
-                    `http://localhost:5000/commandCenter/videos/${camera.id}/stream.m3u8`,
+                    `${apiUrl}/commandCenter/videos/${camera.id}/stream.m3u8`,
                     video
                   );
                 }

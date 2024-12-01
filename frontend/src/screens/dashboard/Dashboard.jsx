@@ -58,8 +58,11 @@ const Dashboard = () => {
   const handleClick = (event, item) => {
     event.preventDefault();
     setActive(item);
-    if (item === "monitoring") {
-      navigate("/monitoring");
+    if (item === "cctvMonitoring") {
+      navigate("/cctvMonitoring");
+    }
+    if (item === "trafficLightStatus") {
+      navigate("/trafficLightStatus");
     }
     if (item === "accounts") {
       navigate("/accounts");

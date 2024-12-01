@@ -1,14 +1,13 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
-import TrafficLight from "./TrafficLight";
 import LogoutModal from "../LogoutModal";
 import SideNavbar from "../SideNavbar";
-import "./Monitoring.css";
+import "./CCTVMonitoring.css";
 import CommandCenter from "./CommandCenter";
-import config from '../../config'; 
+import config from "../../config";
 
-const Monitoring = () => {
+const CCTVMonitoring = () => {
   const apiUrl = config.API_URL;
   // State variables
   const [selectedFiles, setSelectedFiles] = useState([null, null, null, null]);
@@ -26,20 +25,14 @@ const Monitoring = () => {
   const [allVideosUploaded, setAllVideosUploaded] = useState(false);
   const [uploading, setUploading] = useState(false); // New state variable
   const [uploadProgress, setUploadProgress] = useState(0); // State variable to store upload progress
-  const [active, setActive] = useState("monitoring");
+  const [active, setActive] = useState("cctvMonitoring");
   const [vidSrc, setVidSrc] = useState([]);
   const [selected, setSelected] = useState([]);
   // Effect to calculate sorted timers whenever counts change
   const navigate = useNavigate();
-  useEffect(() => {
-    const timers = Object.values(counts).map((count) => count.in_counts * 3);
-    const sorted = timers.slice().sort((a, b) => b - a);
-    setSortedTimers(sorted);
-  }, [counts]);
-
   // Fetch Datas
   useEffect(() => {
-    document.title = "ATLS | Monitoring";
+    document.title = "ATLS | CCTV Monitoring";
     fetchWeekPlan();
     fetchTrafficLightSetting();
     fetchVideo();
@@ -123,27 +116,31 @@ const Monitoring = () => {
     try {
       const formData = new FormData();
       formData.append("video_file", selectedFiles[index]);
-  
-      const response = await axios.post(`${apiUrl}/videos/video_feed`, formData, {
-        headers: {
-          "Content-Type": "multipart/form-data",
-        },
-        responseType: "json",
-        onUploadProgress: (progressEvent) => {
-          const progress = Math.round(
-            (progressEvent.loaded * 100) / progressEvent.total
-          );
-          setUploadProgress(progress); // Update upload progress
-        },
-      });
+
+      const response = await axios.post(
+        `${apiUrl}/videos/video_feed`,
+        formData,
+        {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+          responseType: "json",
+          onUploadProgress: (progressEvent) => {
+            const progress = Math.round(
+              (progressEvent.loaded * 100) / progressEvent.total
+            );
+            setUploadProgress(progress); // Update upload progress
+          },
+        }
+      );
       const { in_counts, out_counts, video_file, video_id } = response.data;
-  
+
       // Update counts state
       setCounts((prevCounts) => ({
         ...prevCounts,
         [index]: { in_counts, out_counts },
       }));
-  
+
       // Get processed video URL using the video_id
       const processedVideoResponse = await axios.get(
         `${apiUrl}/videos/processed_video/${video_id}`, // Pass the video_id here
@@ -155,17 +152,17 @@ const Monitoring = () => {
         type: "video/mp4",
       });
       const processedVideoUrl = URL.createObjectURL(processedVideoBlob);
-  
+
       // Update processed video URLs state
       const newProcessedVideoUrls = [...processedVideoUrls];
       newProcessedVideoUrls[index] = processedVideoUrl;
       setProcessedVideoUrls(newProcessedVideoUrls);
-  
+
       // Set initial countdown for the lane
       const newCountdowns = [...countdowns];
       newCountdowns[index] = { value: in_counts * 3, slow: false };
       setCountdowns(newCountdowns);
-  
+
       // Clear any previous error messages
       setErrorMessages((prevErrors) => {
         const newErrors = [...prevErrors];
@@ -180,9 +177,9 @@ const Monitoring = () => {
         newErrors[index] = "Failed to upload and process video.";
         return newErrors;
       });
-  
+
       console.error("Error uploading and processing video:", error);
-  
+
       // Clear error message after 2 seconds
       setTimeout(() => {
         setErrorMessages((prevErrors) => {
@@ -197,7 +194,6 @@ const Monitoring = () => {
       setUploadProgress(0);
     }
   };
-  
 
   // Function to handle lane deletion
   const handleDelete = (index) => {
@@ -230,6 +226,9 @@ const Monitoring = () => {
     if (item === "weekPlanSetting") {
       navigate("/weekPlanSetting");
     }
+    if (item === "trafficLightStatus") {
+      navigate("/trafficLightStatus");
+    }
     if (item === "violationRecord") {
       navigate("/violationRecord");
     }
@@ -260,17 +259,20 @@ const Monitoring = () => {
   const fetchVideo = async () => {
     const response = await axios.get(`${apiUrl}/videos/get_videos`);
     setVidSrc(response.data);
-    console.log(response.data)
+    console.log(response.data);
   };
   // DELETE IMAGE
   const deleteVideo = async (id) => {
     try {
       const token = sessionStorage.getItem("token");
-      const response = await axios.delete(`${apiUrl}/videos/delete_video/${id}`, {
-        headers: {
-          Authorization: `${token}`,
-        },
-      });
+      const response = await axios.delete(
+        `${apiUrl}/videos/delete_video/${id}`,
+        {
+          headers: {
+            Authorization: `${token}`,
+          },
+        }
+      );
       fetchVideo();
       setShowMessage(true);
       setSuccess(response.data.msg);
@@ -287,7 +289,7 @@ const Monitoring = () => {
       }, 3000);
     }
   };
-  
+
   return (
     <>
       <div className="container-fluid  vh-100 vw-100">
@@ -296,9 +298,11 @@ const Monitoring = () => {
 
           <div className="col-10 col-md-10 p-4">
             <h6 className="p-3">
-              <span className="text-secondary">Pages</span> / Monitoring
+              <span className="text-secondary">Pages</span> / CCTV Monitoring
             </h6>
             <div className="row monitoringContainer">
+            <CommandCenter />
+
               {/* Lane selection and upload section */}
               <div className="d-flex align-items-center justify-content-center">
                 <select
@@ -350,7 +354,6 @@ const Monitoring = () => {
                     </>
                   )}
               </div>
-              <CommandCenter /> 
               <div>
                 {vidSrc && vidSrc.length > 0 ? (
                   vidSrc.map((src, index) => (
@@ -364,7 +367,7 @@ const Monitoring = () => {
                           <th></th>
                         </thead>
                         <tbody>
-                          <tr key={index}>
+                          <tr key={index+1}>
                             <td>{index + 1}</td>
                             <td>{src.in_counts}</td>
                             <td>{src.out_counts}</td>
@@ -395,21 +398,6 @@ const Monitoring = () => {
                   <i>No video</i>
                 )}
               </div>
-              <div className="weekPlanContainer">
-                {weekPlan && weekPlan.length > 0 ? (
-                  weekPlan.map((road) => (
-                    <TrafficLight
-                      key={road.week_plan_id}
-                      groupedByDay={groupedByDay}
-                      road={road}
-                      apiUrl={apiUrl}
-                      trafficLightSettings={trafficLightSettings}
-                    />
-                  ))
-                ) : (
-                  <p>No weekPlan available.</p>
-                )}
-              </div>
             </div>
           </div>
         </div>
@@ -419,4 +407,4 @@ const Monitoring = () => {
   );
 };
 
-export default Monitoring;
+export default CCTVMonitoring;

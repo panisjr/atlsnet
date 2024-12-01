@@ -18,11 +18,18 @@ const SideNavbar = ({ active, handleClick }) => {
           <p className="navbar-button-font mt-3 ms-2">Dashboard</p>
         </div>
         <div
-          onClick={(e) => handleClick(e, "monitoring")}
-          className={`navbar-button ${active === "monitoring" ? "active" : ""}`}
+          onClick={(e) => handleClick(e, "cctvMonitoring")}
+          className={`navbar-button ${active === "cctvMonitoring" ? "active" : ""}`}
         >
           <i className="bi bi-bar-chart ms-3"></i>
-          <p className="navbar-button-font mt-3 ms-2">Monitoring</p>
+          <p className="navbar-button-font mt-3 ms-2">CCTV Monitoring</p>
+        </div>
+        <div
+          onClick={(e) => handleClick(e, "trafficLightStatus")}
+          className={`navbar-button ${active === "trafficLightStatus" ? "active" : ""}`}
+        >
+          <i className="bi bi-bar-chart ms-3"></i>
+          <p className="navbar-button-font mt-3 ms-2">Traffic Light Status</p>
         </div>
         <div
           onClick={(e) => handleClick(e, "accounts")}

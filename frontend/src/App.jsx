@@ -4,7 +4,7 @@ import "bootstrap/dist/js/bootstrap.bundle.min.js";
 import "bootstrap-icons/font/bootstrap-icons.css";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 // import Footage from "./screens/Footage";
-import Monitoring from "./screens/monitoring/Monitoring";
+import CCTVMonitoring from "./screens/monitoring/CCTVMonitoring";
 import AccountManagement from "./screens/account/AccountManagement";
 import WeekPlanSetting from "./screens/weekplan/WeekPlanSetting";
 import ViolationRecord from "./screens/ViolationRecord";
@@ -13,6 +13,7 @@ import Dashboard from "./screens/dashboard/Dashboard";
 import SignIn from "./screens/landingSignIn/SignIn";
 import LandingPage from "./screens/landingSignIn/LandinPage";
 import CommandCenter from "./screens/monitoring/CommandCenter";
+import TrafficLightActive from "./screens/monitoring/TrafficLightActive";
 import TrafficLightStatus from "./screens/monitoring/TrafficLightStatus";
 // import { StreamProvider } from "./screens/StreamProvider";
 function App() {
@@ -31,10 +32,18 @@ function App() {
           }
         />
         <Route
-          path="/monitoring"
+          path="/cctvMonitoring"
           element={
             <ProtectedRoute>
-              <Monitoring />
+              <CCTVMonitoring />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/trafficLightStatus"
+          element={
+            <ProtectedRoute>
+              <TrafficLightStatus />
             </ProtectedRoute>
           }
         />
@@ -62,7 +71,7 @@ function App() {
             </ProtectedRoute>
           }
         />
-        <Route path="/footage" element={<TrafficLightStatus />} />
+        <Route path="/trafficLightActive" element={<TrafficLightActive />} />
         <Route path="/commandCenter" element={<CommandCenter />} />
       </Routes>
     </BrowserRouter>
