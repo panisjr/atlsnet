@@ -148,14 +148,20 @@ const DataTable = ({
             {headerGroups.map((headerGroup) => (
               <tr {...headerGroup.getHeaderGroupProps()}>
                 {headerGroup.headers.map((column) => (
+                  column.render("Header") !== "" && 
                   <th {...column.getHeaderProps(column.getSortByToggleProps())}>
-                    {column.render("Header")}
+                   {column.render("Header")}
                     <span>
-                      {column.isSorted
-                        ? column.isSortedDesc
-                          ? " 🔽"
-                          : " 🔼"
-                        : ""}
+                      {column.isSorted ? (
+                        column.isSortedDesc ? (
+                          <i className="bi bi-caret-down-fill"></i> // Sorted Descending
+                        ) : (
+                          <i className="bi bi-caret-up-fill"></i> // Sorted Descending
+                          // Sorted Ascending
+                        )
+                      ) : (
+                        <i class="bi bi-arrows-vertical"></i> // Neutral when not sorted
+                      )}
                     </span>
                   </th>
                 ))}

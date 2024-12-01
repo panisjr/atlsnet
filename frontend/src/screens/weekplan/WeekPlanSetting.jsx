@@ -717,7 +717,7 @@ const WeekPlanSetting = () => {
                     aria-controls="v-pills-weekPlan"
                     aria-selected="false"
                   >
-                    Week Plan Setting
+                    Daily Plan Setting
                   </p>
                 </div>
               </div>
