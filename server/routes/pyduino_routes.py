@@ -14,8 +14,6 @@ pyduino_routes = Blueprint("pyduino_routes", __name__)
 # Global variable to store serial connection
 serialInst = None
 use = None
-
-# Initialize available ports and COM port selection
 def initialize_serial_connection():
     global serialInst, use
     if serialInst and serialInst.is_open:
@@ -24,19 +22,18 @@ def initialize_serial_connection():
 
     # List available ports
     ports = serial.tools.list_ports.comports()
-    portsList = [str(one) for one in ports]
-    
-    # Automatically get COM port (e.g., COM3)
-    com = '3'  # Use COM3 as default if no port is provided
+    portsList = [str(one.device) for one in ports]  # Use `.device` for port paths
+
+    # Automatically detect a valid port (e.g., /dev/ttyUSB0 or /dev/ttyACM0)
     for port in portsList:
-        if port.startswith("COM" + str(com)):
-            use = "COM" + str(com)
+        if "/dev/ttyUSB" in port or "/dev/ttyACM" in port:
+            use = port
             break
 
     if not use:
-        print(f"Error: COM{com} not found in available ports.")
+        print("Error: No suitable serial port found.")
         return
-    
+
     # Open serial connection
     try:
         serialInst = serial.Serial()
