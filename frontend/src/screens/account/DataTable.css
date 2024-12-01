@@ -1,6 +1,6 @@
 /* DataTable.css */
 .tableContainer {
-  height:550px; /* Adjust height to fit your needs */
+  height:510px; /* Adjust height to fit your needs */
   width: 100%;
   overflow-y: auto;
   overflow-x: hidden; /* Hide horizontal scroll */

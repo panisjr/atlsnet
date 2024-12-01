@@ -304,7 +304,7 @@ const CCTVMonitoring = () => {
             <CommandCenter />
 
               {/* Lane selection and upload section */}
-              <div className="d-flex align-items-center justify-content-center">
+              {/* <div className="d-flex align-items-center justify-content-center">
                 <select
                   onChange={(event) =>
                     setSelectedIndex(parseInt(event.target.value))
@@ -353,8 +353,8 @@ const CCTVMonitoring = () => {
                       </button>
                     </>
                   )}
-              </div>
-              <div>
+              </div> */}
+              {/* <div>
                 {vidSrc && vidSrc.length > 0 ? (
                   vidSrc.map((src, index) => (
                     <div>
@@ -397,7 +397,7 @@ const CCTVMonitoring = () => {
                 ) : (
                   <i>No video</i>
                 )}
-              </div>
+              </div> */}
             </div>
           </div>
         </div>

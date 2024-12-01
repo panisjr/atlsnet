@@ -160,9 +160,9 @@ const SignIn = () => {
                   <a href="#" class="text-light me-3">
                     <i class="bi bi-facebook"></i>
                   </a>
-                  <a href="#" class="text-light">
+                  {/* <a href="#" class="text-light">
                     <i class="bi bi-instagram"></i>
-                  </a>
+                  </a> */}
                 </div>
               </div>
               {/* <div class="text-center mt-3">
