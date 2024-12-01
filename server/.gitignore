@@ -9,8 +9,6 @@ ENV/
 .venv/
 # Environment files
 .env
-.app.py
-
 # Flask instance folder
 instance/
 counting_stream/
