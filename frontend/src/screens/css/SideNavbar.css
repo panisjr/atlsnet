@@ -71,7 +71,7 @@ i {
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-top: 220px;
+  margin-top: 200px;
   cursor: pointer;
 }
 .navbar-button-logout:hover {
