@@ -24,6 +24,9 @@ def allowed_file(filename):
     """
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
+# Set the Tesseract executable path explicitly
+pytesseract.pytesseract.tesseract_cmd = r"/usr/bin/tesseract"  # Adjust path as needed
+
 def preprocess_license_plate(image_path):
     """
     Dynamically preprocess the license plate image by adjusting the processing steps
