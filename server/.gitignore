@@ -14,7 +14,7 @@ instance/
 counting_stream/
 hls/
 stream/
-
+static/
 # Python egg files
 *.egg
 *.egg-info/

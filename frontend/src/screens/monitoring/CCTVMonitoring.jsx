@@ -19,7 +19,6 @@ const CCTVMonitoring = () => {
   ]);
   const [errorMessages, setErrorMessages] = useState([null, null, null, null]);
   const [counts, setCounts] = useState({});
-  const [selectedIndex, setSelectedIndex] = useState(null);
   const [countdowns, setCountdowns] = useState([null, null, null, null]);
   const [sortedTimers, setSortedTimers] = useState([]);
   const [allVideosUploaded, setAllVideosUploaded] = useState(false);
@@ -301,103 +300,7 @@ const CCTVMonitoring = () => {
               <span className="text-secondary">Pages</span> / CCTV Monitoring
             </h6>
             <div className="row monitoringContainer">
-            <CommandCenter />
-
-              {/* Lane selection and upload section */}
-              {/* <div className="d-flex align-items-center justify-content-center">
-                <select
-                  onChange={(event) =>
-                    setSelectedIndex(parseInt(event.target.value))
-                  }
-                >
-                  <option value="">Select Lane</option>
-                  {[0, 1, 2, 3].map((index) => (
-                    <option key={index} value={index}>
-                      Lane {index + 1}
-                    </option>
-                  ))}
-                </select>
-                {selectedIndex !== null &&
-                  !processedVideoUrls[selectedIndex] && (
-                    <>
-                      <input
-                        type="file"
-                        accept="video/*"
-                        onChange={(event) =>
-                          handleFileChange(selectedIndex, event)
-                        }
-                      />
-                      {uploading && (
-                        <div
-                          className="progress mt-2"
-                          style={{ width: "100px" }}
-                        >
-                          <div
-                            className="progress-bar"
-                            role="progressbar"
-                            style={{ width: `${uploadProgress}%` }}
-                            aria-valuenow={uploadProgress}
-                            aria-valuemin="0"
-                            aria-valuemax="100"
-                          >
-                            upload {uploadProgress}%
-                          </div>
-                        </div>
-                      )}
-                      <button
-                        className="btn btn-success"
-                        onClick={() => handleUpload(selectedIndex)}
-                        disabled={uploading}
-                      >
-                        {uploading ? "Processing..." : "Upload & Process"}
-                      </button>
-                    </>
-                  )}
-              </div> */}
-              {/* <div>
-                {vidSrc && vidSrc.length > 0 ? (
-                  vidSrc.map((src, index) => (
-                    <div>
-                      <table className="table table-bordered">
-                        <thead>
-                          <th>No.</th>
-                          <th>In Counts</th>
-                          <th>Out Counts</th>
-                          <th>Video</th>
-                          <th></th>
-                        </thead>
-                        <tbody>
-                          <tr key={index+1}>
-                            <td>{index + 1}</td>
-                            <td>{src.in_counts}</td>
-                            <td>{src.out_counts}</td>
-                            <td>
-                              <video
-                                width="540"
-                                height="260"
-                                autoPlay
-                                loop
-                                muted
-                              >
-                                <source src={src.filename} type="video/mp4" />
-                                Your browser does not support the video tag.
-                              </video>
-                            </td>
-                            <td>
-                              <button
-                                className="btn btn-outline-danger bi bi-trash"
-                                onClick={() => deleteVideo(src.id)}
-                              ></button>
-                            </td>
-                          </tr>
-                        </tbody>
-                      </table>
-                    </div>
-                  ))
-                ) : (
-                  <i>No video</i>
-                )}
-              </div> */}
+              <CommandCenter />
             </div>
           </div>
         </div>

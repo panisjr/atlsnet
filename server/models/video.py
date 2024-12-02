@@ -3,7 +3,7 @@ from datetime import datetime
 
 class Video(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    camera_id = db.Column(db.Integer, db.ForeignKey('cameras.id', name='camera_id_fkey', ondelete='RESTRICT'), nullable=True)
+    camera_id = db.Column(db.Integer, db.ForeignKey('cameras.id', name='camera_id_fkey'), nullable=True )
     in_counts = db.Column(db.Text, nullable=False)
     out_counts = db.Column(db.Text, nullable=False)
     filename = db.Column(db.Text, nullable=True)

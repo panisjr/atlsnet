@@ -12,7 +12,6 @@
     border: 1px solid #ddd; /* Optional: Add border for better visual */
     padding: 10px; /* Optional: Add padding inside the card */
   }
-  
   @media (max-width: 1200px) {
     .camera-card {
       flex: 1 1 calc(33.33% - 20px); /* 3 columns for medium screens */
