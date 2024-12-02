@@ -14,6 +14,8 @@ pyduino_routes = Blueprint("pyduino_routes", __name__)
 # Global variable to store serial connection
 serialInst = None
 use = None
+
+# Initialize available ports and COM port selection
 def initialize_serial_connection():
     global serialInst, use
     if serialInst and serialInst.is_open:
@@ -22,18 +24,19 @@ def initialize_serial_connection():
 
     # List available ports
     ports = serial.tools.list_ports.comports()
-    portsList = [str(one.device) for one in ports]  # Use `.device` for port paths
-
-    # Automatically detect a valid port (e.g., /dev/ttyUSB0 or /dev/ttyACM0)
+    portsList = [str(one) for one in ports]
+    
+    # Automatically get COM port (e.g., COM3)
+    com = '3'  # Use COM3 as default if no port is provided
     for port in portsList:
-        if "/dev/ttyUSB" in port or "/dev/ttyACM" in port:
-            use = port
+        if port.startswith("COM" + str(com)):
+            use = "COM" + str(com)
             break
 
     if not use:
-        print("Error: No suitable serial port found.")
+        print(f"Error: COM{com} not found in available ports.")
         return
-
+    
     # Open serial connection
     try:
         serialInst = serial.Serial()
@@ -90,7 +93,7 @@ def set_green_timer():
             print(f"Sent to Arduino: {message}")
 
             # Wait for the green timer to countdown
-            time.sleep(green_timer + 3)  # Sleep for the green timer duration before sending the next light data
+            time.sleep(green_timer + 4)  # Sleep for the green timer duration before sending the next light data
 
         except Exception as e:
             print(f"Error sending to Arduino. Data: {light_data}, Error: {str(e)}")

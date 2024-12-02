@@ -193,6 +193,19 @@ def handle_connect():
     """Handle client connection."""
     print("Client connected")
     
+import cv2
+
+# Global variables to store line points
+line_points = [(240, 160), (570, 250)]  # Default line position
+
+def draw_line(event, x, y, flags, param):
+    global line_points
+    if event == cv2.EVENT_LBUTTONDOWN:  # On left mouse click
+        if len(line_points) < 2:
+            line_points.append((x, y))
+        if len(line_points) == 2:  # If both points are set
+            print(f"Line points set: {line_points}")
+
 def format_videos(video):
     return {
         "id": video.id,
@@ -202,56 +215,56 @@ def format_videos(video):
         "filename": f"{request.host_url}static/Videos/{video.filename}",
         "created_at": video.created_at,
     }
+# Mouse callback function to adjust the line position
+def adjust_line(event, x, y, flags, param):
+    global line_pointsx 
+    if event == cv2.EVENT_LBUTTONDOWN:  # Left mouse click
+        if len(line_points) < 2:
+            line_points.append((x, y))
+        else:
+            # Reposition the line by updating the two points
+            line_points[0] = line_points[1]
+            line_points[1] = (x, y)
+            print(f"Line points set: {line_points}")
 
-# Route to process uploaded video file
+
 @video_routes.route("/video_feed", methods=["POST"])
 def process_video_frame():
     try:
-        # Check if the post request has the file part
+        # Check for file in request
         if "video_file" not in request.files:
             return jsonify({"error": "No file part"}), 400
 
         file = request.files["video_file"]
 
-        # Check if the user selected a file
+        # Check if a file is selected
         if file.filename == "":
             return jsonify({"error": "No selected file"}), 400
 
-        # Secure the filename
+        # Save the uploaded video
         filename = secure_filename(file.filename)
         original_file_path = os.path.join(UPLOAD_FOLDER, filename)
         file.save(original_file_path)
 
-        # Open the video file using OpenCV
+        # Open the uploaded video with OpenCV
         video_capture = cv2.VideoCapture(original_file_path)
 
-        # Assert that the video capture is successfully opened
         if not video_capture.isOpened():
             return jsonify({"error": "Error reading video file"}), 400
 
-        # Get video properties: width, height, and FPS
+        # Video properties
         width = int(video_capture.get(cv2.CAP_PROP_FRAME_WIDTH))
         height = int(video_capture.get(cv2.CAP_PROP_FRAME_HEIGHT))
-        fps = int(video_capture.get(cv2.CAP_PROP_FPS)) or 30  # Default FPS to 30 if not available
+        fps = int(video_capture.get(cv2.CAP_PROP_FPS)) or 30
 
-        # Define region points as a polygon
-        # region_points = [
-        #     (400, 190),
-        #     (1105, 520),
-        #     (990, 680),
-        #     (220, 239),
-        #     (400, 190),
-        # ]             x     y     x    y
-        line_points = [(240, 160), (570, 250)]  # Example line for counting
-
-        # Create a distinct filename for the processed video
+        # Create the processed video filename
         processed_video_filename = f"processed_{filename}"
         processed_video_path = os.path.join(UPLOAD_FOLDER, processed_video_filename)
 
-        # Initialize video writer
+        # Initialize the video writer
         video_writer = cv2.VideoWriter(
             processed_video_path,
-            cv2.VideoWriter_fourcc(*"avc1"),  # Use "mp4v" for wider compatibility
+            cv2.VideoWriter_fourcc(*"H264"),
             fps,
             (width, height),
         )
@@ -264,18 +277,34 @@ def process_video_frame():
             draw_tracks=True,
         )
 
-        # Process each frame in the video stream
+        # Set mouse callback to allow adjusting line position
+        cv2.namedWindow("Video")
+        cv2.setMouseCallback("Video", adjust_line)
+
+        # Process the video
         while video_capture.isOpened():
             success, frame = video_capture.read()
             if not success:
-                print("Video frame is empty or video processing has been successfully completed.")
+                print("Video processing completed.")
                 break
-            # Perform object detection and counting
-            frame = cv2.resize(frame, (640, 360))  # Resize for faster processing
+
+            # Resize for performance
+            frame = cv2.resize(frame, (640, 360))
+
+            # Perform object detection and tracking
             tracks = model.track(frame, persist=True, show=False)
             processed_frame = counter.start_counting(frame, tracks)
 
-            # Write the processed frame to the output video
+            # Draw the line on the video window (for visual feedback)
+            cv2.line(processed_frame, line_points[0], line_points[1], (0, 255, 0), 2)
+
+            # Display the processed frame with line
+            if counter.view_img:
+                cv2.imshow("Video", processed_frame)
+                if cv2.waitKey(1) & 0xFF == ord("q"):  # Press 'q' to exit the video
+                    break
+
+            # Write processed frame to video
             video_writer.write(processed_frame)
 
         # Release resources
@@ -283,32 +312,32 @@ def process_video_frame():
         video_writer.release()
         cv2.destroyAllWindows()
 
-        # Access the in_counts and out_counts attributes of the counter object
+        # Save counts to the database
         in_counts = counter.in_counts
         out_counts = counter.out_counts
-        print("In counts:", in_counts)
-        print("Out counts:", out_counts)
 
-        # Save the processed video counts to the database
         new_video = Video(in_counts=in_counts, out_counts=out_counts, filename=processed_video_filename)
         db.session.add(new_video)
         db.session.commit()
 
-        # Construct the video source URL for the frontend
+        print(f"Processed video saved at: {processed_video_path}")
+
+        # Construct video source URL for frontend
         video_source_url = f"{request.host_url}static/Videos/{processed_video_filename}"
 
         return jsonify(
             {
+                "message": "Video processed and saved successfully.",
                 "in_counts": in_counts,
                 "out_counts": out_counts,
-                "video_file": processed_video_path,
+                "video_file": processed_video_filename,
                 "vid_src": video_source_url,
             }
         )
 
     except Exception as e:
         return jsonify({"error": str(e)}), 500
-  
+    
 @video_routes.route("/processed_video/<int:video_id>", methods=["GET"])
 def get_processed_video(video_id):
     try:

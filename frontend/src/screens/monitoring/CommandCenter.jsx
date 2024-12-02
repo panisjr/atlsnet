@@ -142,6 +142,7 @@ function CommandCenter() {
               controls
               autoPlay
               muted
+              loop
               ref={(video) => {
                 if (video) {
                   // Initialize HLS for the video element
