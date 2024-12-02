@@ -93,7 +93,7 @@ def set_green_timer():
             print(f"Sent to Arduino: {message}")
 
             # Wait for the green timer to countdown
-            time.sleep(green_timer + 4)  # Sleep for the green timer duration before sending the next light data
+            time.sleep(green_timer + 3)  # Sleep for the green timer duration before sending the next light data
 
         except Exception as e:
             print(f"Error sending to Arduino. Data: {light_data}, Error: {str(e)}")
