@@ -39,7 +39,7 @@ const AccountManagement = () => {
   const [contact, setContact] = useState("");
   const [address, setAddress] = useState("");
   const [password, setPassword] = useState("");
-  const [role, setRole] = useState("User");
+  const [role, setRole] = useState("Admin");
   const [status, setStatus] = useState("Active");
   const [active, setActive] = useState("accounts");
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
@@ -652,6 +652,7 @@ const AccountManagement = () => {
                           value={role}
                           onChange={(e) => handleRoleChange(e.target.value)}
                           data-testid="role-select" // Added data-testid
+                          disabled 
                         >
                           <option value="User">User</option>
                           <option value="Admin">Admin</option>

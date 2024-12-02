@@ -21,14 +21,14 @@ const SideNavbar = ({ active, handleClick }) => {
           onClick={(e) => handleClick(e, "cctvMonitoring")}
           className={`navbar-button ${active === "cctvMonitoring" ? "active" : ""}`}
         >
-          <i className="bi bi-bar-chart ms-3"></i>
+          <i className="bi bi-tv ms-3"></i>
           <p className="navbar-button-font mt-3 ms-2">CCTV Monitoring</p>
         </div>
         <div
           onClick={(e) => handleClick(e, "trafficLightStatus")}
           className={`navbar-button ${active === "trafficLightStatus" ? "active" : ""}`}
         >
-          <i className="bi bi-bar-chart ms-3"></i>
+          <i className="bi bi-stoplights ms-3"></i>
           <p className="navbar-button-font mt-3 ms-2">Traffic Light Status</p>
         </div>
         <div
