@@ -386,7 +386,7 @@ def deactivate_user(id):
         current_user_id = str(decoded_token.get("id"))
 
         if current_user_id == id:
-            return jsonify({"error": "Invalid! You are currently logged in."}), 403
+            return jsonify({"error": "Invalid! You are can't deactivate your account."}), 403
         user = Users.query.filter_by(id=id).one_or_none()
         if not user:
             return jsonify({"error": "User not found"}), 404

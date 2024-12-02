@@ -216,14 +216,14 @@ const AccountManagement = () => {
       setTimeout(() => {
         setShowMessage(false);
         setSuccess(null);
-      }, 3000);
+      }, 4000);
     } catch (error) {
       setShowMessage(true);
       setError(error.response?.data?.error);
       setTimeout(() => {
         setShowMessage(false);
         setError(null);
-      }, 3000);
+      }, 4000);
     }
   };
   const handleActivate = async (userID) => {
