@@ -46,7 +46,7 @@ const ViolationRecord = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!file) {
-      setMsg("Please select a file to upload");
+      setError("Please select a file to upload");
       return;
     }
 
@@ -73,7 +73,7 @@ const ViolationRecord = () => {
       }, 3000);
     } catch (error) {
       console.error("Error uploading the file:", error);
-      setMsg("An error occurred while uploading the file.");
+      setError("An error occurred while uploading the file.");
     }
   };
   // DELETE IMAGE

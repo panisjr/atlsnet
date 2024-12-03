@@ -15,6 +15,7 @@ import LandingPage from "./screens/landingSignIn/LandinPage";
 import CommandCenter from "./screens/monitoring/CommandCenter";
 import TrafficLightActive from "./screens/monitoring/TrafficLightActive";
 import TrafficLightStatus from "./screens/monitoring/TrafficLightStatus";
+import TrafficLightStatus2 from "./screens/monitoring/TrafficLightStatus2";
 // import { StreamProvider } from "./screens/StreamProvider";
 function App() {
   return (
@@ -72,6 +73,7 @@ function App() {
           }
         />
         <Route path="/trafficLightActive" element={<TrafficLightActive />} />
+        <Route path="/dynamic" element={<TrafficLightStatus2 />} />
         <Route path="/commandCenter" element={<CommandCenter />} />
       </Routes>
     </BrowserRouter>
