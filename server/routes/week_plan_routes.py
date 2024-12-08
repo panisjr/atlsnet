@@ -92,6 +92,7 @@ def get_traffic_light():
                     "camera_id": light.camera_id,
                     "day": light.day,
                     "traffic_light_name": light.traffic_light_name,
+                    "traffic_light_name_two_way": light.traffic_light_name_two_way,
                     "traffic_light_timer": light.traffic_light_timer,
                     "traffic_mode": light.traffic_mode,
                     "created_at": light.created_at,
@@ -118,93 +119,51 @@ def add_week_plan(id):
         selectedCameraId = data.get("selectedCameraId")
         new_time = data.get("time")
         new_traffic_mode = data.get("traffic_mode")
-            # Convert `selected_camera_id` to `None` if it's an empty string or invalid
-        if selectedCameraId in [None, "", 0]:
-            camera_id = None
-        else:
+
+        # Validate `selectedCameraId`
+        camera_id = None
+        if selectedCameraId:
             try:
-                camera_id = int(selectedCameraId)
-                # Validate that the camera ID exists in the Camera table
+                camera_id = int(selectedCameraId)  # Ensure it is a valid integer
+                # Validate that the camera ID exists in the database
                 camera = Camera.query.get(camera_id)
                 if not camera:
                     return jsonify({"error": "Selected camera does not exist."}), 400
-            except ValueError:
+            except (ValueError, TypeError):
                 return jsonify({"error": "Invalid camera ID format."}), 400
-        # Check if the intersection exists
-        intersection = Intersection.query.filter_by(
-            id=selected_intersection
-        ).one_or_none()
-        if not intersection:
-            print("Intersection not found!")  # Log if intersection is not found
-            return jsonify({"error": "The selected intersection does not exist!"}), 400
-        # Check if the camera exists
-        camera = Camera.query.filter_by(id=selectedCameraId).one_or_none()
-        if not camera:
-            print("Camera not found!")
-            return jsonify({"error": "Camera not found!"}), 400
-        if new_traffic_mode == "Static":
-            # Validate time format
-            if not re.match(r"^[0-9]{2}:[0-9]{2} - [0-9]{2}:[0-9]{2} : \d+$", new_time):
-                print("Invalid time format!")  # Log if time format is invalid
-                return (
-                    jsonify(
-                        {"error": "Invalid time format. Use HH:MM - HH:MM : Timer format"}
-                    ),
-                    400,
-                )
-        if new_traffic_mode == "Dynamic":
-            # Validate time format
-            if not re.match(r"^[0-9]{2}:[0-9]{2} - [0-9]{2}:[0-9]{2}$", new_time):
-                print("Invalid time format!")  # Log if time format is invalid
-                return (
-                    jsonify(
-                        {"error": "Invalid time format. Use HH:MM - HH:MM : Timer format"}
-                    ),
-                    400,
-                )
 
-        # Check if a WeekPlan already exists
+        # Validate intersection
+        intersection = Intersection.query.filter_by(id=selected_intersection).one_or_none()
+        if not intersection:
+            return jsonify({"error": "The selected intersection does not exist!"}), 400
+
+        # Validate time format
+        if new_traffic_mode == "Static":
+            if not re.match(r"^[0-9]{2}:[0-9]{2} - [0-9]{2}:[0-9]{2} : \d+$", new_time):
+                return jsonify({"error": "Invalid time format. Use HH:MM - HH:MM : Timer format"}), 400
+        elif new_traffic_mode == "Dynamic":
+            if not re.match(r"^[0-9]{2}:[0-9]{2} - [0-9]{2}:[0-9]{2}$", new_time):
+                return jsonify({"error": "Invalid time format. Use HH:MM - HH:MM format"}), 400
+
+        # Check if a WeekPlan already exists for the intersection
         existing_week_plan = WeekPlan.query.filter_by(intersection_id=id).one_or_none()
         if existing_week_plan:
-            print("WeekPlan already exists!")  # Log if WeekPlan exists
-            return (
-                jsonify(
-                    {
-                        "error": "This intersection already has a plan for the selected day!"
-                    }
-                ),
-                401,
-            )
+            return jsonify({"error": "This intersection already has a plan for the selected day!"}), 401
 
         # Create the new TrafficLightSetting
         new_traffic_light = TrafficLightSetting(
             intersection_id=intersection.id,
-            camera_id = camera_id,
-            day=data.get("day"),  # Include the day in TrafficLightSetting
+            camera_id=camera_id,
+            day=data.get("day"),
             traffic_light_name=data.get("traffic_light_name"),
+            traffic_light_name_two_way=data.get("traffic_light_name_two_way"),
             traffic_light_timer=new_time,
             traffic_mode=new_traffic_mode,
             created_at=datetime.now(),
             modified_at=datetime.now(),
         )
-
-        # Commit new TrafficLightSetting
         db.session.add(new_traffic_light)
         db.session.commit()
-
-        # Wait until the TrafficLightSetting is created
-        retry_count = 0
-        max_retries = 5
-        while retry_count < max_retries:
-            db.session.refresh(new_traffic_light)  # Refresh to get the latest state
-            if new_traffic_light.id:
-                break
-            time.sleep(0.5)  # Wait for 500ms before retrying
-            retry_count += 1
-
-        # Verify if the TrafficLightSetting exists
-        if not new_traffic_light.id:
-            return jsonify({"error": "Failed to create TrafficLightSetting in time."}), 500
 
         # Create the WeekPlan
         new_week_plan = WeekPlan(
@@ -221,12 +180,7 @@ def add_week_plan(id):
     except Exception as e:
         db.session.rollback()
         print("Error occurred: ", str(e))  # Log the error
-        return (
-            jsonify(
-                {"error": f"An error occurred while creating the week plan: {str(e)}"}
-            ),
-            500,
-        )
+        return jsonify({"error": f"An error occurred while creating the week plan: {str(e)}"}), 500
 
 @week_plan_routes.route("/set_trafficLight/<int:id>", methods=["POST"])
 def set_traffic_light(id):
@@ -235,7 +189,16 @@ def set_traffic_light(id):
     new_day = data.get("day")
     new_traffic_mode = data.get("traffic_mode")
     new_traffic_light_name = data.get("traffic_light_name")
+    new_traffic_light_name_two_way = data.get("traffic_light_name_two_way")
     selected_camera_id = data.get("selectedCameraId")
+
+    # Ensure traffic light names are null if they don't contain data
+    if not new_traffic_light_name:  # Empty or None will be evaluated as False
+        new_traffic_light_name = None
+
+    if not new_traffic_light_name_two_way:  # Same check for two-way
+        new_traffic_light_name_two_way = None
+
 
     # Convert `selected_camera_id` to `None` if it's an empty string or invalid
     if selected_camera_id in [None, "", 0]:
@@ -286,12 +249,19 @@ def set_traffic_light(id):
                                  f"{existing_start_time} - {existing_end_time}, which is set to "
                                  f"{traffic_light.traffic_mode} mode."
                     }), 409
-
-        # Check if traffic light name, day, and mode already exist
-        if (traffic_light.traffic_light_name == new_traffic_light_name and 
+        if new_traffic_light_name:
+            if (traffic_light.traffic_light_name == new_traffic_light_name and 
             traffic_light.day == new_day and 
             traffic_light.traffic_mode == new_traffic_mode):
-            return jsonify({"error": "Traffic Light with this name is already set!"}), 409
+                return jsonify({"error": "Traffic Light with this name is already set!"}), 409
+
+        if new_traffic_light_name_two_way:
+            if (traffic_light.traffic_light_name_two_way == new_traffic_light_name_two_way and 
+            traffic_light.day == new_day and 
+            traffic_light.traffic_mode == new_traffic_mode):
+                return jsonify({"error": "Traffic Light with this name is already set!"}), 409
+
+
 
     try:
         # Create a new traffic light setting
@@ -300,6 +270,7 @@ def set_traffic_light(id):
             camera_id=camera_id,
             day=new_day,
             traffic_light_name=new_traffic_light_name,
+            traffic_light_name_two_way=new_traffic_light_name_two_way,
             traffic_light_timer=new_time,
             traffic_mode=new_traffic_mode,
             created_at=datetime.now(),

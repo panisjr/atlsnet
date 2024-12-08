@@ -8,7 +8,7 @@ import "./WeekPlanSetting.css";
 import SideNavbar from "../SideNavbar";
 import CameraManager from "../monitoring/CameraManager";
 import IntersectionModals from "./IntersectionModals";
-import config from '../../config'; 
+import config from "../../config";
 const WeekPlanSetting = () => {
   const apiUrl = config.API_URL;
   // Search bar
@@ -30,7 +30,11 @@ const WeekPlanSetting = () => {
     id: "",
     road_name: "",
     traffic_light_timer: "",
-    traffic_light_name: "",
+    traffic_light_name: null,
+    traffic_light_name_two_way: null,
+    traffic_flow_pairs: [],
+    pair1: "", // For Two Way traffic light
+    pair2: "", // For Two Way traffic light
     traffic_light_id: "",
     intersection_id: "",
     camera_id: "",
@@ -42,6 +46,7 @@ const WeekPlanSetting = () => {
     timer: "",
     time: "",
   });
+  const [mode, setMode] = useState("");
 
   // For RTSP
   const [name, setName] = useState("");
@@ -70,7 +75,9 @@ const WeekPlanSetting = () => {
   }, []);
   // START OF INTERSECTION
   const fetchIntersection = async () => {
-    const response = await axios.get(`${apiUrl}/intersections/get_intersections`);
+    const response = await axios.get(
+      `${apiUrl}/intersections/get_intersections`
+    );
     setIntersection(response.data);
     setFilteredIntersection(response.data);
   };
@@ -183,6 +190,7 @@ const WeekPlanSetting = () => {
     try {
       let newTime;
       let trafficMode = selected.traffic_mode;
+
       if (trafficMode == "Static") {
         newTime = `${selected.startTime} - ${selected.endTime} : ${selected.timer}`;
       }
@@ -190,12 +198,22 @@ const WeekPlanSetting = () => {
         newTime = `${selected.startTime} - ${selected.endTime}`;
       }
       const setTrafficMode = `${selected.traffic_mode}`;
+      let traffic_light_name_two_way = "";
 
+      if (
+        selected.mode === "Two Way" &&
+        selected.traffic_flow_pairs.length > 0 &&
+        selected.traffic_flow_pairs[0].pair1 &&
+        selected.traffic_flow_pairs[0].pair2
+      ) {
+        traffic_light_name_two_way = `${selected.traffic_flow_pairs[0].pair1} - ${selected.traffic_flow_pairs[0].pair2}`;
+      }
       const dataToSend = {
         ...selected,
         selected_intersection: selectedIntersection,
         day: selected.day,
         traffic_light_name: selected.traffic_light_name,
+        traffic_light_name_two_way: traffic_light_name_two_way,
         time: newTime,
         traffic_mode: setTrafficMode,
         selectedCameraId: selectedCameraId,
@@ -310,7 +328,6 @@ const WeekPlanSetting = () => {
     setSelectedWeekPlan(road);
   };
   const [found, setFound] = useState(null); // Initialize as null
-  const [mode, setMode] = useState(null);
   const handleSelectedCamera = (id, item) => {
     const camera = cameras.find((cam) => cam.id === id);
     if (camera) {
@@ -391,11 +408,22 @@ const WeekPlanSetting = () => {
     }
     const setTrafficMode = `${selected.traffic_mode}`;
     console.log("Traffic Mode: ", setTrafficMode);
+    let traffic_light_name_two_way = "";
+
+    if (
+      selected.mode === "Two Way" &&
+      selected.traffic_flow_pairs.length > 0 &&
+      selected.traffic_flow_pairs[0].pair1 &&
+      selected.traffic_flow_pairs[0].pair2
+    ) {
+      traffic_light_name_two_way = `${selected.traffic_flow_pairs[0].pair1} - ${selected.traffic_flow_pairs[0].pair2}`;
+    }
     const dataToSend = {
       ...selected, // Spread the existing properties from selected
       time: newTime, // Add the constructed time
       traffic_mode: setTrafficMode,
       selectedCameraId: selectedCameraId,
+      traffic_light_name_two_way: traffic_light_name_two_way,
     };
 
     try {
@@ -660,6 +688,8 @@ const WeekPlanSetting = () => {
     setSelected({
       ...selected,
       traffic_light_name: "",
+      pair1: "",
+      pair2: "",
       startTime: "", // Clear start time
       endTime: "", // Clear end time
       timer: "", // Clear timer
@@ -1084,7 +1114,7 @@ const WeekPlanSetting = () => {
                       required
                     >
                       <option value="" disabled selected>
-                        Open this select menu
+                        Select Intersection
                       </option>
                       {intersection.map((intersection) => (
                         <option key={intersection.id} value={intersection.id}>
@@ -1092,14 +1122,14 @@ const WeekPlanSetting = () => {
                         </option>
                       ))}
                     </select>
-                    <label htmlFor="floatingSelect">Select Intersection</label>
+                    <label htmlFor="floatingSelect">Intersection</label>
                   </div>
                   {selected ? (
                     <div className="mt-2">
                       {selected.intersection_name}
-                      <div class="form-floating m-2">
+                      <div className="form-floating m-2">
                         <select
-                          class="form-select"
+                          className="form-select"
                           id="floatingSelect"
                           value={selected.day}
                           onChange={(e) =>
@@ -1107,7 +1137,9 @@ const WeekPlanSetting = () => {
                           }
                           required
                         >
-                          <option selected>Open this select menu</option>
+                          <option value="" disabled>
+                            Select day
+                          </option>
                           <option value="Monday">Monday</option>
                           <option value="Tuesday">Tuesday</option>
                           <option value="Wednesday">Wednesday</option>
@@ -1116,35 +1148,173 @@ const WeekPlanSetting = () => {
                           <option value="Saturday">Saturday</option>
                           <option value="Sunday">Sunday</option>
                         </select>
-                        <label for="floatingSelect">Select Day</label>
+                        <label htmlFor="floatingSelect">Day</label>
                       </div>
-                      <div class="form-floating m-2">
+
+                      {/* Mode Selector */}
+                      <div className="form-floating m-2">
                         <select
-                          class="form-select"
-                          id="floatingSelect"
-                          value={selected.traffic_light_name}
+                          className="form-select"
+                          id="modeSelect"
+                          value={selected.mode}
                           onChange={(e) =>
                             setSelected({
                               ...selected,
-                              traffic_light_name: e.target.value,
+                              mode: e.target.value,
+                              traffic_flow_pairs: [],
+                              traffic_light_name: "",
                             })
                           }
                           required
                         >
-                          <option selected>Open this select menu</option>
-                          <option value="North">North</option>
-                          <option value="South">South</option>
-                          <option value="East">East</option>
-                          <option value="West">West</option>
+                          <option value="" disabled>
+                            Select Mode
+                          </option>
+                          <option value="One Way">One Way</option>
+                          <option value="Two Way">Two Way</option>
                         </select>
-                        <label for="floatingSelect">Select Traffic Light</label>
+                        <label htmlFor="modeSelect">Select Mode</label>
                       </div>
+
+                      {/* Conditional Inputs Based on Mode */}
+                      {selected.mode === "One Way" && (
+                        <div className="form-floating m-2">
+                          <select
+                            className="form-select"
+                            id="trafficLight"
+                            value={selected.traffic_light_name}
+                            onChange={(e) =>
+                              setSelected({
+                                ...selected,
+                                traffic_light_name: e.target.value,
+                              })
+                            }
+                            required
+                          >
+                            <option value="" disabled>
+                              Select Traffic Light
+                            </option>
+                            <option value="North">North</option>
+                            <option value="South">South</option>
+                            <option value="East">East</option>
+                            <option value="West">West</option>
+                          </select>
+                          <label htmlFor="trafficLight">Traffic Light</label>
+                        </div>
+                      )}
+
+                      {selected.mode === "Two Way" && (
+                        <>
+                          {/* Dynamic Traffic Flow Direction Assignment */}
+                          <div className="m-2">
+                            <h6>Assign Traffic Flow Direction:</h6>
+                            <div className="d-flex align-items-center">
+                              <div className="form-floating me-2">
+                                <select
+                                  className="form-select"
+                                  id="trafficLightPair1"
+                                  value={selected.pair1}
+                                  onChange={(e) => {
+                                    const updatedSelected = {
+                                      ...selected,
+                                      pair1: e.target.value,
+                                    };
+                                    setSelected(updatedSelected);
+
+                                    if (updatedSelected.pair2) {
+                                      setSelected((prev) => ({
+                                        ...prev,
+                                        traffic_flow_pairs: [
+                                          ...prev.traffic_flow_pairs,
+                                          {
+                                            pair1: updatedSelected.pair1,
+                                            pair2: updatedSelected.pair2,
+                                          },
+                                        ],
+                                        pair1: "",
+                                        pair2: "",
+                                      }));
+                                    }
+                                  }}
+                                >
+                                  <option value="" disabled>
+                                    Select First Traffic Light
+                                  </option>
+                                  <option value="North">North</option>
+                                  <option value="South">South</option>
+                                  <option value="East">East</option>
+                                  <option value="West">West</option>
+                                </select>
+                                <label htmlFor="trafficLightPair1">
+                                  First Traffic Light
+                                </label>
+                              </div>
+
+                              <div className="form-floating">
+                                <select
+                                  className="form-select"
+                                  id="trafficLightPair2"
+                                  value={selected.pair2}
+                                  onChange={(e) => {
+                                    const updatedSelected = {
+                                      ...selected,
+                                      pair2: e.target.value,
+                                    };
+                                    setSelected(updatedSelected);
+
+                                    if (updatedSelected.pair1) {
+                                      setSelected((prev) => ({
+                                        ...prev,
+                                        traffic_flow_pairs: [
+                                          ...prev.traffic_flow_pairs,
+                                          {
+                                            pair1: updatedSelected.pair1,
+                                            pair2: updatedSelected.pair2,
+                                          },
+                                        ],
+                                        pair1: "",
+                                        pair2: "",
+                                      }));
+                                    }
+                                  }}
+                                >
+                                  <option value="" disabled>
+                                    Select Second Traffic Light
+                                  </option>
+                                  <option value="North">North</option>
+                                  <option value="South">South</option>
+                                  <option value="East">East</option>
+                                  <option value="West">West</option>
+                                </select>
+                                <label htmlFor="trafficLightPair2">
+                                  Second Traffic Light
+                                </label>
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Display Assigned Pairs */}
+                          <div className="mt-2">
+                            <h6>Assigned Pairs:</h6>
+                            <ul>
+                              {selected.traffic_flow_pairs.map(
+                                (pair, index) => (
+                                  <li key={index}>
+                                    {pair.pair1} ↔ {pair.pair2}
+                                  </li>
+                                )
+                              )}
+                            </ul>
+                          </div>
+                        </>
+                      )}
+
                       <CameraManager
                         selectedCameraId={selectedCameraId}
                         setSelectedCameraId={setSelectedCameraId}
                       />
                       <div>
-                        {/* New Timer Mode Selection */}
+                        {/* Timer Mode Selection */}
                         <div className="form-floating m-2">
                           <select
                             className="form-select"
@@ -1164,12 +1334,10 @@ const WeekPlanSetting = () => {
                             <option value="Static">Static</option>
                             <option value="Dynamic">Dynamic</option>
                           </select>
-                          <label htmlFor="traffic_mode">
-                            Select Timer Mode
-                          </label>
+                          <label htmlFor="traffic_mode">Timer Mode</label>
                         </div>
 
-                        {/* Shared Start Time and End Time */}
+                        {/* Start and End Time */}
                         <div className="d-flex align-items-center justify-content-start">
                           <div className="form-floating mt-2">
                             <input
@@ -1230,6 +1398,7 @@ const WeekPlanSetting = () => {
                   ) : (
                     <p>No road found.</p>
                   )}
+
                   <div className="modal-footer">
                     <button
                       type="button"
@@ -1243,6 +1412,10 @@ const WeekPlanSetting = () => {
                           startTime: "",
                           endTime: "",
                           traffic_light_name: "",
+                          day: "",
+                          mode: "",
+                          pair1: "",
+                          pair2: "",
                         });
                       }}
                     >
@@ -1665,7 +1838,7 @@ const WeekPlanSetting = () => {
                         required
                       >
                         <option value="" disabled>
-                          Open this select menu
+                          Select Day
                         </option>
                         <option value="Monday">Monday</option>
                         <option value="Tuesday">Tuesday</option>
@@ -1675,35 +1848,164 @@ const WeekPlanSetting = () => {
                         <option value="Saturday">Saturday</option>
                         <option value="Sunday">Sunday</option>
                       </select>
-                      <label htmlFor="floatingSelect">Select Day</label>
+                      <label htmlFor="floatingSelect">Day</label>
                     </div>
 
-                    {/* Select Traffic Light */}
+                    {/* Mode Selector */}
                     <div className="form-floating m-2">
                       <select
                         className="form-select"
-                        id="floatingSelect"
-                        value={selected.traffic_light_name}
+                        id="modeSelect"
+                        value={selected.mode}
                         onChange={(e) =>
                           setSelected({
                             ...selected,
-                            traffic_light_name: e.target.value,
+                            mode: e.target.value,
+                            traffic_flow_pairs: [],
+                            traffic_light_name: "",
                           })
                         }
                         required
                       >
                         <option value="" disabled>
-                          Open this select menu
+                          Select Mode
                         </option>
-                        <option value="North">North</option>
-                        <option value="South">South</option>
-                        <option value="East">East</option>
-                        <option value="West">West</option>
+                        <option value="One Way">One Way</option>
+                        <option value="Two Way">Two Way</option>
                       </select>
-                      <label htmlFor="floatingSelect">
-                        Select Traffic Light
-                      </label>
+                      <label htmlFor="modeSelect">Select Mode</label>
                     </div>
+
+                    {/* Conditional Inputs Based on Mode */}
+                    {selected.mode === "One Way" && (
+                      <div className="form-floating m-2">
+                        <select
+                          className="form-select"
+                          id="trafficLight"
+                          value={selected.traffic_light_name}
+                          onChange={(e) =>
+                            setSelected({
+                              ...selected,
+                              traffic_light_name: e.target.value,
+                            })
+                          }
+                          required
+                        >
+                          <option value="" disabled>
+                            Select Traffic Light
+                          </option>
+                          <option value="North">North</option>
+                          <option value="South">South</option>
+                          <option value="East">East</option>
+                          <option value="West">West</option>
+                        </select>
+                        <label htmlFor="trafficLight">Traffic Light</label>
+                      </div>
+                    )}
+
+                    {selected.mode === "Two Way" && (
+                      <>
+                        {/* Dynamic Traffic Flow Direction Assignment */}
+                        <div className="m-2">
+                          <h6>Assign Traffic Flow Direction:</h6>
+                          <div className="d-flex align-items-center">
+                            <div className="form-floating me-2">
+                              <select
+                                className="form-select"
+                                id="trafficLightPair1"
+                                value={selected.pair1}
+                                onChange={(e) => {
+                                  const updatedSelected = {
+                                    ...selected,
+                                    pair1: e.target.value,
+                                  };
+                                  setSelected(updatedSelected);
+
+                                  if (updatedSelected.pair2) {
+                                    setSelected((prev) => ({
+                                      ...prev,
+                                      traffic_flow_pairs: [
+                                        ...prev.traffic_flow_pairs,
+                                        {
+                                          pair1: updatedSelected.pair1,
+                                          pair2: updatedSelected.pair2,
+                                        },
+                                      ],
+                                      pair1: "",
+                                      pair2: "",
+                                    }));
+                                  }
+                                }}
+                              >
+                                <option value="" disabled>
+                                  Select First Traffic Light
+                                </option>
+                                <option value="North">North</option>
+                                <option value="South">South</option>
+                                <option value="East">East</option>
+                                <option value="West">West</option>
+                              </select>
+                              <label htmlFor="trafficLightPair1">
+                                First Traffic Light
+                              </label>
+                            </div>
+
+                            <div className="form-floating">
+                              <select
+                                className="form-select"
+                                id="trafficLightPair2"
+                                value={selected.pair2}
+                                onChange={(e) => {
+                                  const updatedSelected = {
+                                    ...selected,
+                                    pair2: e.target.value,
+                                  };
+                                  setSelected(updatedSelected);
+
+                                  if (updatedSelected.pair1) {
+                                    setSelected((prev) => ({
+                                      ...prev,
+                                      traffic_flow_pairs: [
+                                        ...prev.traffic_flow_pairs,
+                                        {
+                                          pair1: updatedSelected.pair1,
+                                          pair2: updatedSelected.pair2,
+                                        },
+                                      ],
+                                      pair1: "",
+                                      pair2: "",
+                                    }));
+                                  }
+                                }}
+                              >
+                                <option value="" disabled>
+                                  Select Second Traffic Light
+                                </option>
+                                <option value="North">North</option>
+                                <option value="South">South</option>
+                                <option value="East">East</option>
+                                <option value="West">West</option>
+                              </select>
+                              <label htmlFor="trafficLightPair2">
+                                Second Traffic Light
+                              </label>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Display Assigned Pairs */}
+                        <div className="mt-2">
+                          <h6>Assigned Pairs:</h6>
+                          <ul>
+                            {selected.traffic_flow_pairs.map((pair, index) => (
+                              <li key={index}>
+                                {pair.pair1} ↔ {pair.pair2}
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      </>
+                    )}
                     <CameraManager
                       selectedCameraId={selectedCameraId}
                       setSelectedCameraId={setSelectedCameraId}
@@ -1728,7 +2030,7 @@ const WeekPlanSetting = () => {
                         <option value="Static">Static</option>
                         <option value="Dynamic">Dynamic</option>
                       </select>
-                      <label htmlFor="traffic_mode">Select Timer Mode</label>
+                      <label htmlFor="traffic_mode">Timer Mode</label>
                     </div>
 
                     {/* Shared Start Time and End Time */}
@@ -1874,19 +2176,20 @@ const WeekPlanSetting = () => {
                       <i className="bi bi-x me-2"></i>
                       Cancel
                     </button>
-                    {selected.traffic_light_name && (
-                      <button
-                        type="button"
-                        onClick={() =>
-                          deleteTrafficLight(selected.traffic_light_id)
-                        }
-                        className="btn btn-danger"
-                        data-bs-dismiss="modal"
-                      >
-                        <i className="bi bi-check2 me-2"></i>
-                        Yes
-                      </button>
-                    )}
+                    {selected.traffic_light_name ||
+                      (selected.traffic_light_name_two_way && (
+                        <button
+                          type="button"
+                          onClick={() =>
+                            deleteTrafficLight(selected.traffic_light_id)
+                          }
+                          className="btn btn-danger"
+                          data-bs-dismiss="modal"
+                        >
+                          <i className="bi bi-check2 me-2"></i>
+                          Yes
+                        </button>
+                      ))}
                     {selected.id && (
                       <button
                         type="button"

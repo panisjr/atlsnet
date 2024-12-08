@@ -7,6 +7,7 @@ class TrafficLightSetting(db.Model):
     camera_id = db.Column(db.Integer, db.ForeignKey('cameras.id', name='camera_id_fkey', ondelete='RESTRICT'), nullable=True)
     day = db.Column(db.Text, nullable=True)
     traffic_light_name = db.Column(db.Text, nullable=True)
+    traffic_light_name_two_way = db.Column(db.Text, nullable=True)
     traffic_light_timer = db.Column(db.Text, nullable=True)
     traffic_mode = db.Column(db.Text, nullable=True)
     created_at = db.Column(db.DateTime, nullable=False, default=datetime.now)

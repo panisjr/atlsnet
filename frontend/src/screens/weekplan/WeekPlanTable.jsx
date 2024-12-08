@@ -71,7 +71,7 @@ const WeekPlanTable = ({
                             .map((light) => (
                               <tr key={light.traffic_light_id}>
                                 <td>
-                                  {light.traffic_light_name || <i>No Name</i>}
+                                  {light.traffic_light_name || light.traffic_light_name_two_way || <i>No name</i>}
                                 </td>
                                 <td>
                                   {light.traffic_light_timer ? (

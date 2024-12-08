@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
-import axios from 'axios';
-import config from '../../config'; 
+import React, { useState, useEffect } from "react";
+import axios from "axios";
+import config from "../../config";
 const TrafficLightActive = () => {
   const [trafficLights, setTrafficLights] = useState([]);
   const [north, setNorth] = useState(null);
@@ -21,12 +21,12 @@ const TrafficLightActive = () => {
         assignTrafficLightsToDirections(trafficLightsData);
       })
       .catch((error) => {
-        console.error('Error fetching traffic light settings:', error);
+        console.error("Error fetching traffic light settings:", error);
       });
   }, []);
 
-  const assignTrafficLightsToDirections = (lights) => { 
-    const today = new Date().toLocaleString('en-US', { weekday: 'long' }); // Get current day name
+  const assignTrafficLightsToDirections = (lights) => {
+    const today = new Date().toLocaleString("en-US", { weekday: "long" }); // Get current day name
     const currentTime = new Date(); // Current date and time
     const currentHour = currentTime.getHours();
     const currentMinute = currentTime.getMinutes();
@@ -34,51 +34,42 @@ const TrafficLightActive = () => {
     const lightsToSend = [];
   
     lights.forEach((light) => {
-      if (light.traffic_mode !== 'Static' || light.day !== today) return;
+      if (light.traffic_mode !== "Static" || light.day !== today) return;
   
       // Parse traffic light timer range
-      const [timerRange, greenTimerValue] = light.traffic_light_timer.split(' : ');
-      
-      // Split the timer range into start and end times
-      const [startTime, endTime] = timerRange.split(' - ');
-      const [startHour, startMinute] = startTime.split(':').map(Number);
-      const [endHour, endMinute] = endTime.split(':').map(Number);
-      
+      const [timerRange, greenTimerValue] = light.traffic_light_timer.split(" : ");
+      const [startTime, endTime] = timerRange.split(" - ");
+      const [startHour, startMinute] = startTime.split(":").map(Number);
+      const [endHour, endMinute] = endTime.split(":").map(Number);
+  
       // Check if the current time is within the range
       const isWithinTimeRange =
-        (currentHour > startHour || (currentHour === startHour && currentMinute >= startMinute)) &&
-        (currentHour < endHour || (currentHour === endHour && currentMinute <= endMinute));
+        (currentHour > startHour ||
+          (currentHour === startHour && currentMinute >= startMinute)) &&
+        (currentHour < endHour ||
+          (currentHour === endHour && currentMinute <= endMinute));
   
       if (isWithinTimeRange) {
         // The green timer is after the ":"
         const greenTimer = parseInt(greenTimerValue?.trim(), 10);
   
         if (isNaN(greenTimer)) {
-          console.error('Invalid green timer value:', greenTimerValue);
+          console.error("Invalid green timer value:", greenTimerValue);
           return; // Skip invalid values
         }
   
         // Assign light to its respective direction
-        switch (light.traffic_light_name) {
-          case 'North':
-            setNorth(light);
-            break;
-          case 'South':
-            setSouth(light);
-            break;
-          case 'East':
-            setEast(light);
-            break;
-          case 'West':
-            setWest(light);
-            break;
-          default:
-            console.warn(`Unrecognized traffic light name: ${light.traffic_light_name}`);
+        handleTrafficLightAssignment(light);
+  
+        // Check for two-way traffic light assignment
+        if (light.traffic_light_name_two_way) {
+          handleTwoWayTrafficAssignment(light);
         }
   
         // Collect the light data to send to the backend (without start_time, end_time, current_time)
         lightsToSend.push({
           traffic_light_name: light.traffic_light_name,
+          traffic_light_name_two_way: light.traffic_light_name_two_way,
           intersection_id: light.intersection_id,
           traffic_mode: light.traffic_mode,
           timer: greenTimer,
@@ -90,6 +81,45 @@ const TrafficLightActive = () => {
     // Send the collected traffic light data to the backend
     sendGreenTimers(lightsToSend);
   };
+  
+  const handleTrafficLightAssignment = (light) => {
+    switch (light.traffic_light_name) {
+      case "North":
+        setNorth(light);
+        break;
+      case "South":
+        setSouth(light);
+        break;
+      case "East":
+        setEast(light);
+        break;
+      case "West":
+        setWest(light);
+        break;
+      default:
+        console.warn(`Unrecognized traffic light name: ${light.traffic_light_name}`);
+    }
+  };
+  
+  const handleTwoWayTrafficAssignment = (light) => {
+    const pair = light.traffic_light_name_two_way;
+    const directionMap = {
+      "North - South": () => {
+        setNorth(light); // Adjust if light1/light2 are used
+        setSouth(light); // Adjust if light1/light2 are used
+      },
+      "East - West": () => {
+        setEast(light); // Adjust if light1/light2 are used
+        setWest(light); // Adjust if light1/light2 are used
+      },
+    };
+  
+    const assignLights = directionMap[pair];
+    if (assignLights) assignLights();
+    else {
+      console.warn(`Unrecognized two-way traffic light name: ${pair}`);
+    }
+  };
 
   const sendGreenTimers = (lightsToSend) => {
     if (lightsToSend.length === 0) return;
@@ -99,11 +129,13 @@ const TrafficLightActive = () => {
     // Check if the current time is within the range
     const isWithinTimeRange = lightsToSend.some((light) => {
       if (!light.end_time) {
-        console.warn(`Missing 'end_time' for light: ${light.traffic_light_name}`);
+        console.warn(
+          `Missing 'end_time' for light: ${light.traffic_light_name}`
+        );
         return false;
       }
   
-      const [endHour, endMinute] = light.end_time.split(':').map(Number); // Parse the end time
+      const [endHour, endMinute] = light.end_time.split(":").map(Number); // Parse the end time
       const endTime = new Date();
       endTime.setHours(endHour, endMinute, 0, 0); // Set the end time to the parsed endHour and endMinute
   
@@ -112,20 +144,28 @@ const TrafficLightActive = () => {
     });
   
     if (isWithinTimeRange) {
+      // Calculate the maximum delay based on the green timers of all lights
+      const maxGreenTimer = lightsToSend.reduce((max, light) => {
+        const greenTimer = light.green_timer || 0; // Assume 0 if green_timer is missing
+        return Math.max(max, greenTimer);
+      }, 0);
+  
+      const delay = (maxGreenTimer + 3) * 1000; // Convert seconds to milliseconds and add 3 seconds
+  
       // Send the data to the backend
       axios
         .post(`${apiUrl}/pyduino/set-green-timer`, { lights: lightsToSend }) // Send array of lights data
         .then((response) => {
-          console.log('Green timers sent successfully:', response.data);
+          console.log("Green timers sent successfully:", response.data);
   
           // Send again after success
-          setTimeout(() => sendGreenTimers(lightsToSend), 5000); // Retry after a delay (e.g., 5 seconds)
+          setTimeout(() => sendGreenTimers(lightsToSend), delay); // Retry after calculated delay
         })
         .catch((error) => {
-          console.error('Error sending green timers:', error);
+          console.error("Error sending green timers:", error);
         });
     }
-  };  
+  };
   
 
   // return (
@@ -176,4 +216,3 @@ const TrafficLightActive = () => {
 };
 
 export default TrafficLightActive;
-
