@@ -145,26 +145,35 @@ const DataTable = ({
       <div className="tableContainer">
         <table {...getTableProps()} className="table table-striped">
           <thead>
-            {headerGroups.map((headerGroup,index) => (
+            {headerGroups.map((headerGroup, index) => (
               <tr key={index + 1} {...headerGroup.getHeaderGroupProps()}>
-                {headerGroup.headers.map((column) => (
-                  column.render("Header") !== "" && 
-                  <th {...column.getHeaderProps(column.getSortByToggleProps())}>
-                   {column.render("Header")}
-                    <span>
-                      {column.isSorted ? (
-                        column.isSortedDesc ? (
-                          <i className="bi bi-caret-down-fill"></i> // Sorted Descending
-                        ) : (
-                          <i className="bi bi-caret-up-fill"></i> // Sorted Descending
-                          // Sorted Ascending
-                        )
-                      ) : (
-                        <i class="bi bi-arrows-vertical"></i> // Neutral when not sorted
-                      )}
-                    </span>
-                  </th>
-                ))}
+                {headerGroup.headers.map(
+                  (column) =>
+                    column.render("Header") !== "" && (
+                      <th
+                        {...column.getHeaderProps(
+                          column.getSortByToggleProps()
+                        )}
+                      >
+                        {column.render("Header")}
+                          {column.isSorted ? (
+                            column.isSortedDesc ? (
+                              <i className="bi bi-caret-down-fill"></i> // Sorted Descending
+                            ) : (
+                              <i className="bi bi-caret-up-fill"></i> // Sorted Descending
+                              // Sorted Ascending
+                            )
+                          ) : (
+                            <tr>
+                              <td colSpan="4" className="text-center">
+                                <i className="bi bi-arrows-vertical"></i>
+                                {/* Neutral when not sorted */}
+                              </td>
+                            </tr>
+                          )}
+                      </th>
+                    )
+                )}
               </tr>
             ))}
           </thead>

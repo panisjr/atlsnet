@@ -13,9 +13,9 @@ import Dashboard from "./screens/dashboard/Dashboard";
 import SignIn from "./screens/landingSignIn/SignIn";
 import LandingPage from "./screens/landingSignIn/LandinPage";
 import CommandCenter from "./screens/monitoring/CommandCenter";
-import TrafficLightActive from "./screens/monitoring/TrafficLightActive";
+import TrafficLightActiveStatic from "./screens/monitoring/TrafficLightActiveStatic";
 import TrafficLightStatus from "./screens/monitoring/TrafficLightStatus";
-import TrafficLightStatus2 from "./screens/monitoring/TrafficLightStatus2";
+import TrafficLightActiveDynamic from "./screens/monitoring/TrafficLightActiveDynamic";
 // import { StreamProvider } from "./screens/StreamProvider";
 function App() {
   return (
@@ -72,8 +72,8 @@ function App() {
             </ProtectedRoute>
           }
         />
-        <Route path="/trafficLightActive" element={<TrafficLightActive />} />
-        <Route path="/dynamic" element={<TrafficLightStatus2 />} />
+        <Route path="/trafficLightActive" element={<TrafficLightActiveStatic />} />
+        <Route path="/dynamic" element={<TrafficLightActiveDynamic />} />
         <Route path="/commandCenter" element={<CommandCenter />} />
       </Routes>
     </BrowserRouter>

@@ -303,7 +303,7 @@ const AccountManagement = () => {
                 data-bs-toggle="modal"
                 data-bs-target="#createAccountStaticBackdrop"
               >
-                <i class="bi bi-person-plus"></i>
+                <i className="bi bi-person-plus"></i>
               </button>
               <input
                 className="form-control searchBar"

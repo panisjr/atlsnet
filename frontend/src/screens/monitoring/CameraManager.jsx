@@ -64,7 +64,7 @@ const CameraManager = ({ selectedCameraId, setSelectedCameraId }) => {
             value={selectedCameraId || ""}
             onChange={handleCameraSelect}
           >
-            <option value="" selected>
+            <option value="">
               Select a camera
             </option>
             {cameras.map((camera) => (

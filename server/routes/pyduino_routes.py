@@ -106,6 +106,86 @@ def set_green_timer():
     # Return a successful response after processing all lights
     return jsonify({"message": "Green Timers sent successfully", "sent_lights": lights_data}), 200
 
+# Endpoint to set Green Light Timer
+# @pyduino_routes.route('/set-green-timer-dynamic', methods=['POST'])
+# def set_green_timer_dynamic():
+#     # Ensure there's an open serial connection before proceeding
+#     if not serialInst or not serialInst.is_open:
+#         return jsonify({"error": "Serial connection not available"}), 500
+
+#     # Get the data sent from the frontend
+#     data = request.json
+#     lights_data = data.get('lights', [])
+    
+#     if not lights_data:
+#         return jsonify({"error": "No traffic light data provided"}), 400
+
+#     # Sort the lights_data by green_timer in descending order
+#     lights_data.sort(key=lambda x: x.get('timer', 0), reverse=True)
+
+#     for light_data in lights_data:
+#         intersection_id = light_data.get("intersection_id")
+#         light_name = light_data.get('traffic_light_name')
+#         traffic_mode = light_data.get('traffic_mode')
+#         green_timer = light_data.get('timer')
+#         light_name_two_way = light_data.get('traffic_light_name_two_way')
+
+#         # Validate input data for each light
+#         if not isinstance(intersection_id, int):
+#             return jsonify({"error": f"Invalid intersection ID for {light_name}"}), 400
+#         if traffic_mode not in ["Static", "Dynamic"]:
+#             return jsonify({"error": f"Invalid traffic mode for {light_name}"}), 400
+#         if not light_name and not light_name_two_way:
+#             return jsonify({"error": f"Invalid light name or two-way name for intersection {intersection_id}"}), 400
+#         if not (0 <= green_timer <= 120):  # Example timer range (0-120 seconds)
+#             return jsonify({"error": f"Invalid green timer value for {light_name or light_name_two_way}"}), 400
+
+#         try:
+#             # Determine which light name to use (either traffic_light_name or traffic_light_name_two_way)
+#             light_to_send = light_name if light_name else light_name_two_way
+
+#             # Prepare the message to send to Arduino
+#             message = f"Intersection:{intersection_id},Light:{light_to_send},Mode:{traffic_mode},Green:{green_timer}\\n"
+            
+#             # Send the message to the Arduino
+#             serialInst.write(message.encode())  # Send message to Arduino
+#             print(f"Sent to Arduino: {message}")
+
+#             # Wait for the green timer to countdown
+#             time.sleep(green_timer + 3)  # Sleep for the green timer duration before sending the next light data
+
+#         except Exception as e:
+#             print(f"Error sending to Arduino. Data: {light_data}, Error: {str(e)}")
+#             return jsonify({"error": f"Failed to send data for {light_to_send} to Arduino"}), 500
+
+#     # Return a successful response after processing all lights
+#     return jsonify({"message": "Green Timers sent successfully", "sent_lights": lights_data}), 200
+
+@pyduino_routes.route('/set-green-timer-dynamic', methods=['POST'])
+def set_green_timer_dynamic():
+    try:
+        if not serialInst or not serialInst.is_open:
+            return jsonify({"error": "Serial connection is not open."}), 400
+
+        # Get the timer value from the request body
+        timer = request.json.get('timer')
+        if timer and timer.isdigit():
+            intersection_id = 12
+            light_name = "North"
+            traffic_mode = "Dynamic"
+            green_timer = timer
+
+
+            message = f"Intersection:{intersection_id},Light:{light_name},Mode:{traffic_mode},Green:{green_timer}\\n"
+
+            message = f"Green:{timer}"  # Format: Green:30
+            serialInst.write(message.encode('utf-8'))
+            return jsonify({"message": f"Sent Green Light Timer: {timer} seconds"}), 200
+        else:
+            return jsonify({"error": "Invalid input. Please enter a numeric value."}), 400
+    except Exception as e:
+        return jsonify({"error": f"Failed to set timer: {e}"}), 500
+    
 # GET TRAFFIC LIGHT SETTING
 @pyduino_routes.route("/get_trafficLight", methods=["GET"])
 def get_traffic_light():

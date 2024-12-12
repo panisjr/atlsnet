@@ -8,8 +8,8 @@ from extensions import db, socketio
 from werkzeug.utils import secure_filename
 from datetime import datetime, timedelta
 from sqlalchemy import func, cast, Integer
-from threading import Thread
-
+from threading import Thread, Lock
+import time
 video_routes = Blueprint("video_routes", __name__)
 
 # Initialize YOLO model
@@ -22,6 +22,33 @@ STREAM_DIR = "hls"
 UPLOAD_FOLDER = os.path.join(os.getcwd(), 'static', 'Videos')
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
+# Track active streams
+active_streams = {}
+lock = Lock()
+
+# Global variables to store line points
+line_points = [(240, 160), (570, 250)]  # Default line position
+# Mouse callback function to adjust the line position
+def adjust_line(event, x, y, flags, param):
+    global line_pointsx 
+    if event == cv2.EVENT_LBUTTONDOWN:  # Left mouse click
+        if len(line_points) < 2:
+            line_points.append((x, y))
+        else:
+            # Reposition the line by updating the two points
+            line_points[0] = line_points[1]
+            line_points[1] = (x, y)
+            print(f"Line points set: {line_points}")
+            
+def format_videos(video):
+    return {
+        "id": video.id,
+        "camera_id": video.camera_id,
+        "in_counts": video.in_counts,
+        "out_counts": video.out_counts,
+        "filename": f"{request.host_url}static/Videos/{video.filename}",
+        "created_at": video.created_at,
+    }
 def start_streaming(rtsp_url, camera_id):
     """Start HLS streaming and generate playlist with correct relative paths."""
     camera_hls_dir = os.path.join(STREAM_DIR, str(camera_id))  # Directory for camera-specific HLS content
@@ -47,71 +74,89 @@ def start_streaming(rtsp_url, camera_id):
     ]
     
     os.system(" ".join(command))  # Execute the command to start streaming
-
 def process_rtsp_stream(rtsp_url, app, camera_id):
-    """Process RTSP stream for object counting, real-time updates, and saving to the database periodically."""
-    with app.app_context():  # Explicitly push app context for database operations
-        cap = cv2.VideoCapture(rtsp_url)
-        if not cap.isOpened():
-            print(f"Error: Unable to open RTSP stream: {rtsp_url}")
-            return
+    """Process RTSP stream for object counting with periodic stops after data saving."""
+    global line_points
 
-        # Define line points for object counting (can be adjusted per camera setup)
-        line_points = [(10, 80), (630, 280)]  # Example line for counting
-        counter = ObjectCounter(
-            names=model.names,
-            reg_pts=line_points,
-            view_img=False,  # No image display since we're not saving the video
-            draw_tracks=True,  # Enable drawing for visualizations
-        )
-
-        frame_skip = 2  # Skip frames for performance optimization
-        frame_count = 0
-        last_save_time = datetime.now()
-
-        while True:
-            ret, frame = cap.read()
-            if not ret:
-                print("Stream ended or interrupted.")
-                break
-
-            frame_count += 1
-            if frame_count % frame_skip != 0:
+    while True:
+        with app.app_context():
+            cap = cv2.VideoCapture(rtsp_url)
+            if not cap.isOpened():
+                print(f"Error: Unable to open RTSP stream: {rtsp_url}")
+                time.sleep(5)  # Retry after 5 seconds
                 continue
 
-            frame = cv2.resize(frame, (640, 360))  # Resize for faster processing
-            tracks = model.track(frame, persist=True, show=False)  # Track objects
-            counter.start_counting(frame, tracks)
+            counter = ObjectCounter(
+                names=model.names,
+                reg_pts=line_points,
+                view_img=True,
+                draw_tracks=True,
+            )
+            cv2.namedWindow("Video")
+            cv2.setMouseCallback("Video", adjust_line)
 
-            # Emit real-time updates to the client
-            socketio.emit("update_message", {
-                "in_counts": counter.in_counts,
-                "out_counts": counter.out_counts
-            })
+            try:
+                start_time = time.time()
+                while True:
+                    ret, frame = cap.read()
+                    if not ret:
+                        print("Stream ended or interrupted.")
+                        break
 
-            # Save counts to the database every 15 seconds
-            current_time = datetime.now()
-            if (current_time - last_save_time).total_seconds() >= 15:
-                try:
-                    new_video = Video(
-                        in_counts=counter.in_counts,
-                        out_counts=counter.out_counts,
-                        filename=None,  # No filename to save since we're not saving video
-                        camera_id=camera_id
-                    )
-                    db.session.add(new_video)
-                    db.session.commit()
-                    print(f"Counts saved for camera {camera_id}: {counter.in_counts}, {counter.out_counts}")
-                    last_save_time = current_time  # Update the last save time
-                except Exception as e:
-                    db.session.rollback()
-                    print(f"Error saving to database: {e}")
+                    frame = cv2.resize(frame, (640, 360))
+                    tracks = model.track(frame, persist=True, show=False)
+                    processed_frame = counter.start_counting(frame, tracks)
 
-            socketio.sleep(0.1)  # Allow time for other tasks
+                    # Use updated line points without restarting the stream
+                    cv2.line(processed_frame, line_points[0], line_points[1], (0, 255, 0), 2)
 
-        # Final cleanup
-        cap.release()
-        cv2.destroyAllWindows()
+                    if counter.view_img:
+                        cv2.imshow("Video", processed_frame)
+                        if cv2.waitKey(1) & 0xFF == ord("q"):
+                            return  # Exit the function completely if 'q' is pressed
+
+                    # Emit counts to frontend
+                    socketio.emit("update_message", {
+                        "in_counts": counter.in_counts,
+                        "out_counts": counter.out_counts,
+                        "timer": counter.out_counts * 3
+                    })
+                    socketio.sleep(0.1)
+
+                    # Save counts to the database after 30 seconds
+                    elapsed_time = time.time() - start_time
+                    if elapsed_time >= 30:
+                        if counter.in_counts > 0 or counter.out_counts > 0:  # Check counts
+                            try:
+                                new_video = Video(
+                                    in_counts=counter.in_counts,
+                                    out_counts=counter.out_counts,
+                                    filename=str(counter.out_counts * 3),  # Timer as placeholder filename
+                                    camera_id=camera_id
+                                )
+                                db.session.add(new_video)
+                                db.session.commit()
+
+                                print(f"Counts saved for camera {camera_id}: IN={counter.in_counts}, OUT={counter.out_counts}, TIMER={counter.out_counts * 3}")
+                                return jsonify({'out_counts': counter.out_counts}), 200
+                            except Exception as e:
+                                db.session.rollback()
+                                print(f"Error saving to database: {e}")
+                        else:
+                            print("Counts are 0; skipping database commit.")
+
+                        # Stop processing temporarily and restart
+                        print("Stopping process temporarily after saving data.")
+                        break  # Exit the inner loop to restart
+
+            finally:
+                cap.release()
+                cv2.destroyAllWindows()
+
+        # Delay before restarting the process
+        print("Restarting process...")
+        time.sleep(2)  # Optional: Add delay before restarting
+
 
 # ============ HLS STREAM START ================
 @video_routes.route("/start_hls/<int:camera_id>", methods=["POST"])
@@ -180,52 +225,38 @@ def stream_segment(camera_id, filename):
 def start_counting(camera_id):
     """Start real-time object counting for the given camera."""
     camera = Camera.query.get(camera_id)
-    if camera and camera.status:
-        rtsp_url = camera.rtsp_url
-        app = current_app._get_current_object()  # Get the Flask app instance
-        thread = Thread(target=process_rtsp_stream, args=(rtsp_url, app, camera_id))
-        thread.start()
-        return jsonify({'message': 'Real-time counting started', 'rtsp_url': rtsp_url}), 200
-    return jsonify({'message': 'Camera not found or inactive'}), 404
+    if not camera or not camera.status:
+        return jsonify({'message': 'Camera not found or inactive'}), 404
+
+    rtsp_url = camera.rtsp_url
+    app = current_app._get_current_object()  # Get the Flask app instance
+
+    with lock:
+        if camera_id in active_streams:
+            return jsonify({'message': 'Counting is already running for this camera'}), 200
+
+        # Mark the stream as active
+        active_streams[camera_id] = {'thread': None, 'status': 'active'}
+
+    # Start the counting process in a new thread
+    def thread_target():
+        try:
+            process_rtsp_stream(rtsp_url, app, camera_id)
+        finally:
+            # Clean up after the thread finishes
+            with lock:
+                active_streams.pop(camera_id, None)
+
+    thread = Thread(target=thread_target)
+    active_streams[camera_id]['thread'] = thread
+    thread.start()
+
+    return jsonify({'message': 'Real-time counting started', 'rtsp_url': rtsp_url}), 200
 
 @socketio.on("connect")
 def handle_connect():
     """Handle client connection."""
     print("Client connected")
-    
-import cv2
-
-# Global variables to store line points
-line_points = [(240, 160), (570, 250)]  # Default line position
-
-def draw_line(event, x, y, flags, param):
-    global line_points
-    if event == cv2.EVENT_LBUTTONDOWN:  # On left mouse click
-        if len(line_points) < 2:
-            line_points.append((x, y))
-        if len(line_points) == 2:  # If both points are set
-            print(f"Line points set: {line_points}")
-
-def format_videos(video):
-    return {
-        "id": video.id,
-        "camera_id": video.camera_id,
-        "in_counts": video.in_counts,
-        "out_counts": video.out_counts,
-        "filename": f"{request.host_url}static/Videos/{video.filename}",
-        "created_at": video.created_at,
-    }
-# Mouse callback function to adjust the line position
-def adjust_line(event, x, y, flags, param):
-    global line_pointsx 
-    if event == cv2.EVENT_LBUTTONDOWN:  # Left mouse click
-        if len(line_points) < 2:
-            line_points.append((x, y))
-        else:
-            # Reposition the line by updating the two points
-            line_points[0] = line_points[1]
-            line_points[1] = (x, y)
-            print(f"Line points set: {line_points}")
 
 
 @video_routes.route("/video_feed", methods=["POST"])

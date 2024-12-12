@@ -45,8 +45,8 @@ const WeekPlanSetting = () => {
     endTime: "",
     timer: "",
     time: "",
+    mode: "",
   });
-  const [mode, setMode] = useState("");
 
   // For RTSP
   const [name, setName] = useState("");
@@ -222,11 +222,11 @@ const WeekPlanSetting = () => {
         `${apiUrl}/weekPlan/add_weekPlan/${id}`,
         dataToSend
       );
+      clearForm();
       setShowMessage(true);
       setSuccess(response.data.message);
       fetchWeekPlan();
       fetchTrafficLightSetting();
-      clearForm();
       setTimeout(() => {
         setShowMessage(false);
         setSuccess(null);
@@ -328,6 +328,7 @@ const WeekPlanSetting = () => {
     setSelectedWeekPlan(road);
   };
   const [found, setFound] = useState(null); // Initialize as null
+  const [mode, setMode] = useState(null); // Initialize as null
   const handleSelectedCamera = (id, item) => {
     const camera = cameras.find((cam) => cam.id === id);
     if (camera) {
@@ -720,16 +721,16 @@ const WeekPlanSetting = () => {
             <h6 className="p-3">
               <span className="text-secondary">Pages</span> / Week Plan
             </h6>
-            <div class="row weekPlanContainer p-2">
+            <div className="row weekPlanContainer p-2">
               <div className="d-flex align-items-center justify-content-between">
                 <div
-                  class="weekplan-button-container nav nav-pills"
+                  className="weekplan-button-container nav nav-pills"
                   id="v-pills-tab"
                   role="tablist"
                   aria-orientation="vertical"
                 >
                   <p
-                    class="weekPlan-button active"
+                    className="weekPlan-button active"
                     id="v-pills-intersection-tab"
                     data-bs-toggle="pill"
                     data-bs-target="#v-pills-intersection"
@@ -741,7 +742,7 @@ const WeekPlanSetting = () => {
                     Intersection Setting
                   </p>
                   <p
-                    class="weekPlan-button"
+                    className="weekPlan-button"
                     id="v-pills-weekPlan-tab"
                     data-bs-toggle="pill"
                     data-bs-target="#v-pills-weekPlan"
@@ -755,14 +756,14 @@ const WeekPlanSetting = () => {
                 </div>
               </div>
               {/* Side Bar */}
-              <div class="tab-content pt-4 vw-100" id="v-pills-tabContent">
+              <div className="tab-content pt-4 vw-100" id="v-pills-tabContent">
                 {/* Intersection Tab */}
                 <div
-                  class="tab-pane fade show active"
+                  className="tab-pane fade show active"
                   id="v-pills-intersection"
                   role="tabpanel"
                   aria-labelledby="v-pills-intersection-tab"
-                  tabindex="0"
+                  tabIndex="0"
                 >
                   <div className="add-intersection-container row">
                     <div className="col-4 add-intersection-form">
@@ -792,9 +793,11 @@ const WeekPlanSetting = () => {
                     <div className="col-8 intersection-table ">
                       <table className="table table-bordered table-striped">
                         <thead>
-                          <th>No.</th>
-                          <th>Intersection</th>
-                          <th></th>
+                          <tr>
+                            <th>No.</th>
+                            <th>Intersection</th>
+                            <th></th>
+                          </tr>
                         </thead>
                         <tbody>
                           {intersection ? (
@@ -823,7 +826,11 @@ const WeekPlanSetting = () => {
                               </tr>
                             ))
                           ) : (
-                            <i>No intersection</i>
+                            <tr>
+                              <td colSpan="4" className="text-center">
+                                <i>No intersection</i>
+                              </td>
+                            </tr>
                           )}
                         </tbody>
                       </table>
@@ -846,7 +853,7 @@ const WeekPlanSetting = () => {
                               onChange={(e) => setName(e.target.value)}
                               placeholder="Name"
                             />
-                            <label for="cameraName">
+                            <label htmlFor="cameraName">
                               {" "}
                               <i>Custom Camera Name</i>
                             </label>
@@ -860,7 +867,7 @@ const WeekPlanSetting = () => {
                               onChange={(e) => setLocation(e.target.value)}
                               required
                             >
-                              <option value="" disabled selected>
+                              <option value="" disabled>
                                 Select Location
                               </option>
                               {intersection.map((intersection) => (
@@ -888,7 +895,7 @@ const WeekPlanSetting = () => {
                               onChange={(e) => setUsername(e.target.value)}
                               placeholder="Username"
                             />
-                            <label for="username">
+                            <label htmlFor="username">
                               <i>Username</i>
                             </label>
                           </div>
@@ -903,7 +910,7 @@ const WeekPlanSetting = () => {
                               onChange={(e) => setPassword(e.target.value)}
                               placeholder="Password"
                             />
-                            <label for="password">
+                            <label htmlFor="password">
                               <i>Password</i>
                             </label>
                           </div>
@@ -918,7 +925,7 @@ const WeekPlanSetting = () => {
                               onChange={(e) => setCameraIP(e.target.value)}
                               placeholder="Camera IP(192.168.100.25)"
                             />
-                            <label for="camera_ip">
+                            <label htmlFor="camera_ip">
                               <i>Camera IP</i>
                             </label>
                           </div>
@@ -933,7 +940,7 @@ const WeekPlanSetting = () => {
                               onChange={(e) => setPort(e.target.value)}
                               placeholder="Port(554)"
                             />
-                            <label for="port">
+                            <label htmlFor="port">
                               <i>Port</i>
                             </label>
                           </div>
@@ -948,7 +955,7 @@ const WeekPlanSetting = () => {
                               onChange={(e) => setStream(e.target.value)}
                               placeholder="Stream Name"
                             />
-                            <label for="stream">
+                            <label htmlFor="stream">
                               <i>Stream Path (stream1)</i>
                             </label>
                           </div>
@@ -1036,11 +1043,11 @@ const WeekPlanSetting = () => {
                 </div>
                 {/* Week Plan Tab */}
                 <div
-                  class="tab-pane fade"
+                  className="tab-pane fade"
                   id="v-pills-weekPlan"
                   role="tabpanel"
                   aria-labelledby="v-pills-weekPlan-tab"
-                  tabindex="0"
+                  tabIndex="0"
                 >
                   <div className="mb-3 d-flex">
                     <button
@@ -1113,7 +1120,7 @@ const WeekPlanSetting = () => {
                       onChange={(e) => setSelectedIntersection(e.target.value)}
                       required
                     >
-                      <option value="" disabled selected>
+                      <option value="" disabled>
                         Select Intersection
                       </option>
                       {intersection.map((intersection) => (
@@ -2153,6 +2160,14 @@ const WeekPlanSetting = () => {
                       value={selected.traffic_light_name}
                     />
                   )}
+                  {selected.traffic_light_name_two_way && (
+                    <input
+                      type="text"
+                      className="form-control mb-2"
+                      disabled
+                      value={selected.traffic_light_name_two_way}
+                    />
+                  )}
                   {selected.intersection_name && (
                     <input
                       type="text"
@@ -2176,20 +2191,32 @@ const WeekPlanSetting = () => {
                       <i className="bi bi-x me-2"></i>
                       Cancel
                     </button>
-                    {selected.traffic_light_name ||
-                      (selected.traffic_light_name_two_way && (
-                        <button
-                          type="button"
-                          onClick={() =>
-                            deleteTrafficLight(selected.traffic_light_id)
-                          }
-                          className="btn btn-danger"
-                          data-bs-dismiss="modal"
-                        >
-                          <i className="bi bi-check2 me-2"></i>
-                          Yes
-                        </button>
-                      ))}
+                    {selected.traffic_light_name && (
+                      <button
+                        type="button"
+                        onClick={() =>
+                          deleteTrafficLight(selected.traffic_light_id)
+                        }
+                        className="btn btn-danger"
+                        data-bs-dismiss="modal"
+                      >
+                        <i className="bi bi-check2 me-2"></i>
+                        Yes
+                      </button>
+                    )}
+                    {selected.traffic_light_name_two_way && (
+                      <button
+                        type="button"
+                        onClick={() =>
+                          deleteTrafficLight(selected.traffic_light_id)
+                        }
+                        className="btn btn-danger"
+                        data-bs-dismiss="modal"
+                      >
+                        <i className="bi bi-check2 me-2"></i>
+                        Yes
+                      </button>
+                    )}
                     {selected.id && (
                       <button
                         type="button"

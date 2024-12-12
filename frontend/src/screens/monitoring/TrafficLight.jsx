@@ -4,6 +4,8 @@ import Hls from "hls.js";
 import { io } from "socket.io-client";
 import StaticTrafficLights from "./StaticTrafficLights";
 import DynamicTrafficLights from "./DynamicTrafficLights";
+import { debounce } from "lodash";
+
 const TrafficLight = ({ groupedByDay, road, apiUrl, trafficLightSettings }) => {
   // State management
   const [inCounts, setInCounts] = useState(0);
@@ -14,7 +16,7 @@ const TrafficLight = ({ groupedByDay, road, apiUrl, trafficLightSettings }) => {
   const [countdown, setCountdown] = useState(null);
   const [isCountingDown, setIsCountingDown] = useState(false);
   const [delayCountdown, setDelayCountdown] = useState(null);
-
+  const [dynamicTimer, setDynamicTimer] = useState("");
   const videoRef = useRef(null);
   const [hlsStreamUrl, setHlsStreamUrl] = useState("");
   const socket = useRef(null);
@@ -45,52 +47,65 @@ const TrafficLight = ({ groupedByDay, road, apiUrl, trafficLightSettings }) => {
       ? currentTime >= startTime || currentTime <= endTime
       : currentTime >= startTime && currentTime <= endTime;
   };
-
+  let isFirstStart = true; // To track whether we've started with a 15-second duration.
+  let dynamicTimerRunning = false;
+  let isUpdatingTimers = false;
   const updateActiveTimers = () => {
-    const currentDay = getCurrentDay();
-    const newStaticTimers = [];
-    const newDynamicTimers = [];
+    if (isUpdatingTimers) return;
+    isUpdatingTimers = true;
+    try {
+      const currentDay = getCurrentDay();
+      const newStaticTimers = [];
+      const newDynamicTimers = [];
+      if (groupedByDay[currentDay]) {
+        groupedByDay[currentDay].forEach((light) => {
+          const timers = light.traffic_light_timer?.split(";") || [];
+          if (light.traffic_mode === "Static") {
+            timers.forEach((segment) => {
+              const [timeRange, timer] = segment.split(" : ");
+              if (isCurrentTimeInRange(timeRange)) {
+                newStaticTimers.push({
+                  id: light.traffic_light_id,
+                  name: light.traffic_light_name,
+                  duration: parseInt(timer.trim(), 10),
+                });
+              }
+            });
+          } else if (light.traffic_mode === "Dynamic") {
+            if (
+              timers.some((segment) =>
+                isCurrentTimeInRange(segment.split(" : ")[0])
+              )
+            ) {
+              // const fallbackDuration = 15; // Default 15 seconds fallback duration
+              // const dynamicCountDuration =
+              //   outCounts > 0 ? outCounts * 5 : fallbackDuration;
 
-    if (groupedByDay[currentDay]) {
-      groupedByDay[currentDay].forEach((light) => {
-        const timers = light.traffic_light_timer?.split(";") || [];
-        if (light.traffic_mode === "Static") {
-          timers.forEach((segment) => {
-            const [timeRange, timer] = segment.split(" : ");
-            if (isCurrentTimeInRange(timeRange)) {
-              newStaticTimers.push({
+              newDynamicTimers.push({
                 id: light.traffic_light_id,
                 name: light.traffic_light_name,
-                duration: parseInt(timer.trim(), 10),
+                duration: outCounts * 3,
               });
+              startCounting(light);
+              // startHLS(light);
             }
-          });
-        } else if (light.traffic_mode === "Dynamic") {
-          if (
-            timers.some((segment) =>
-              isCurrentTimeInRange(segment.split(" : ")[0])
-            )
-          ) {
-            newDynamicTimers.push({
-              id: light.traffic_light_id,
-              name: light.traffic_light_name,
-              duration: inCounts, // Set the dynamic timer to inCounts * 2
-            });
-          startCounting();
-          startHLS();
           }
-        }
-      });
-    }
+        });
+      }
 
-    setActiveStaticTimers(
-      newStaticTimers.sort((a, b) => b.duration - a.duration)
-    );
-    setActiveDynamicTimers(newDynamicTimers);
+      setActiveStaticTimers(
+        newStaticTimers.sort((a, b) => b.duration - a.duration)
+      );
+      setActiveDynamicTimers(
+        newDynamicTimers.sort((a, b) => b.duration - a.duration)
+      );
+    } finally {
+      isUpdatingTimers = false;
+    }
   };
 
-  const startCounting = async () => {
-    const { camera_id: selectedCameraId } = road.camera_info || {};
+  const startCounting = async (light) => {
+    const { camera_id: selectedCameraId } = light.camera_info || {};
     if (!selectedCameraId || !apiUrl) {
       console.error("Camera ID or apiUrl is missing");
       alert("Please select a camera first.");
@@ -98,21 +113,37 @@ const TrafficLight = ({ groupedByDay, road, apiUrl, trafficLightSettings }) => {
     }
 
     try {
-      const { data } = await axios.post(
+      const response = await axios.post(
         `${apiUrl}/videos/start_counting/${selectedCameraId}`
       );
-      console.log(data.message);
+      console.log(response.data.out_counts);
+      setOutCounts(response.data.out_counts)
     } catch (error) {
       console.error("Error starting counting:", error);
     }
-  };
+};
+  
+  // const startCounting = async (light, duration) => {
+  //   console.log("Out Counts Timer: ", duration); // Log the duration being used for debugging
+  //   const { camera_id: selectedCameraId } = light.camera_info || {};
 
-  const startHLS = async () => {
-    const { camera_id: selectedCameraId } = road.camera_info || {};
-    if (!selectedCameraId || !apiUrl) {
-      alert("Please select a camera first.");
-      return;
-    }
+  //   try {
+  //     const { data } = await axios.post(
+  //       `${apiUrl}/videos/start_counting/${selectedCameraId}`,
+  //       { duration } // Pass duration in request payload
+  //     );
+  //     console.log("Response from server:", data.message);
+  //   } catch (error) {
+  //     console.error("Error starting counting:", error);
+  //   }
+  // };
+
+  const startHLS = async (light) => {
+    const { camera_id: selectedCameraId } = light.camera_info || {};
+    // if (!selectedCameraId || !apiUrl) {
+    //   alert("Please select a camera first.");
+    //   return;
+    // }
 
     try {
       const { data } = await axios.post(
@@ -122,7 +153,6 @@ const TrafficLight = ({ groupedByDay, road, apiUrl, trafficLightSettings }) => {
       // Update the HLS stream URL after starting the stream
       const updatedHlsStreamUrl = `${apiUrl}/hls/${selectedCameraId}/stream.m3u8`;
       setHlsStreamUrl(updatedHlsStreamUrl); // Update state with the new URL
-      setStreaming(true); // Update the global streaming state
     } catch (error) {
       console.error("Error starting HLS:", error);
     }
@@ -137,9 +167,7 @@ const TrafficLight = ({ groupedByDay, road, apiUrl, trafficLightSettings }) => {
   const startNextDynamicTimer = () => {
     if (currentTimerIndex < activeDynamicTimers.length) {
       // Use inCounts for dynamic timer
-      const dynamicTimerDuration = inCounts * 2; // Multiply inCounts by 2 to adjust the timer
-      setCountdown(dynamicTimerDuration); // Set countdown to dynamic timer duration
-      setIsCountingDown(true); // Start countdown
+      setIsCountingDown(false); // Start countdown
       setDelayCountdown(3); // Optional: set a 3-second delay before the countdown starts
     }
   };
@@ -147,10 +175,18 @@ const TrafficLight = ({ groupedByDay, road, apiUrl, trafficLightSettings }) => {
   // Effects
   useEffect(() => {
     updateActiveTimers();
-    const interval = setInterval(updateActiveTimers, 60000);
-    return () => clearInterval(interval);
   }, [groupedByDay]);
-
+  
+  // const debouncedUpdateActiveTimers = debounce(updateActiveTimers, 60000);
+  // useEffect(() => {
+  //   debouncedUpdateActiveTimers();
+  //   return () => debouncedUpdateActiveTimers.cancel();
+  // }, [groupedByDay]);
+  // useEffect(() => {
+  //   updateActiveTimers();
+  //   const interval = setInterval(updateActiveTimers, 60000);
+  //   return () => clearInterval(interval);
+  // }, [groupedByDay]);
   useEffect(() => {
     if (delayCountdown !== null) {
       const delayInterval = setInterval(() => {
@@ -198,9 +234,7 @@ const TrafficLight = ({ groupedByDay, road, apiUrl, trafficLightSettings }) => {
       if (currentTimerIndex < activeStaticTimers.length) {
         startNextStaticTimer(); // Start the next static timer
       } else if (currentTimerIndex < activeDynamicTimers.length) {
-        const dynamicTimerDuration = inCounts * 2; // Example: use inCounts to set dynamic duration
-        setCountdown(dynamicTimerDuration); // Set countdown to dynamic timer duration
-        setIsCountingDown(true); // Start the countdown
+        startNextDynamicTimer();
       } else {
         // If all timers are completed, restart from the beginning
         setCurrentTimerIndex(0); // Reset the timer index
@@ -229,11 +263,24 @@ const TrafficLight = ({ groupedByDay, road, apiUrl, trafficLightSettings }) => {
 
     // Handle real-time updates from the backend server
     socket.current.on("update_message", (data) => {
-      if (data.in_counts !== undefined) {
-        setInCounts(data.in_counts * 2); // Multiply in_counts by 2
+      if (data.out_counts !== undefined) {
+        setOutCounts(data.out_counts); // Multiply in_counts by 2
       }
-      if (data.out_counts !== undefined) setOutCounts(data.out_counts);
+      if (data.in_counts !== undefined) setInCounts(data.in_counts);
     });
+
+    // socket.current.on("video_counts_update", (data) => {
+    //   if (data.error) {
+    //     console.error("Error saving data:", data.error);
+    //   } else {
+    //     if (data.out_counts !== undefined) {
+    //       setOutCounts(data.out_counts); // Multiply in_counts by 2
+    //     }
+    //     console.log(
+    //       `Counts updated - Camera ID: ${data.camera_id}, IN: ${data.in_counts}, OUT: ${data.out_counts}`
+    //     );
+    //   }
+    // });
 
     // Initialize HLS.js for video streaming
     const video = videoRef.current;

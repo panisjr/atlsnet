@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import TrafficLightActiveDynamic from "./TrafficLightActiveDynamic";
 
 const DynamicTrafficLights = ({
   dynamicLights,
@@ -53,6 +54,7 @@ const DynamicTrafficLights = ({
   return (
     <>
       <h6>Active Dynamic Traffic Lights</h6>
+      <TrafficLightActiveDynamic outCounts={outCounts}/>
       {dynamicLights ? (
         dynamicLights
           .filter((light) =>
@@ -80,13 +82,13 @@ const DynamicTrafficLights = ({
                     </span>
                   </p>
                 </div>
-                <video
+                {/* <video
                   ref={videoRef}
                   autoPlay
                   controls
                   muted
                   style={{ width: "100%", maxHeight: "300px" }}
-                ></video>
+                ></video> */}
                 <div>
                   <p>
                     {light.traffic_light_name || <i>No Name</i>}{" "}

@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 
-function TrafficLightStatus2() {
+function TrafficLightActiveDynamic() {
   const api = "http://localhost:5000";
   const [comPort, setComPort] = useState("");
   const [statusMessage, setStatusMessage] = useState("");
@@ -67,7 +67,7 @@ function TrafficLightStatus2() {
 
   const handleSetGreenTimer = async (timer) => {
     try {
-      const response = await axios.post(`${api}/pyduino/set-green-timer`, {
+      const response = await axios.post(`${api}/pyduino/set-green-timer-dynamic`, {
         timer: timer,
       });
       setStatusMessage(response.data.message || response.data.error);
@@ -80,7 +80,7 @@ function TrafficLightStatus2() {
 
   useEffect(() => {
     fetchTrafficLightSetting();
-    fetchVideos(8);  // Fetch latest video for camera ID 1
+    fetchVideos(15);  // Fetch latest video for camera ID 1
     document.title = "ATLS | Arduino Control";
   }, []);
 
@@ -137,4 +137,4 @@ function TrafficLightStatus2() {
   );
 }
 
-export default TrafficLightStatus2;
+export default TrafficLightActiveDynamic;

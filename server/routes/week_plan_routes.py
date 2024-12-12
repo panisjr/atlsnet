@@ -19,53 +19,41 @@ def get_week_plan():
 
     for plan in week_plans:
         intersection = Intersection.query.get(plan.intersection_id)
+        intersection_name = intersection.intersection_name if intersection else None
 
-        # Check if traffic_light_id is not None before querying TrafficLightSetting
-        traffic_light_setting = (
-            TrafficLightSetting.query.get(plan.traffic_light_id)
-            if plan.traffic_light_id is not None else None
-        )
-        print(traffic_light_setting)
-        camera_info = None  # Initialize camera_info
-        # Fetch camera information if traffic_light_setting and camera_id exist
-        if traffic_light_setting:
-            print("Traffic Light Setting:", traffic_light_setting)
-            if traffic_light_setting.camera_id:
-                camera_info = Camera.query.get(traffic_light_setting.camera_id)
-                if camera_info:
-                    print("Camera Info Found:", camera_info.id, camera_info.name)
-                else:
-                    print("No Camera Info Found for Camera ID:", traffic_light_setting.camera_id)
-            else:
-                print("Traffic Light Setting has no Camera ID")
+        # Fetch all traffic light settings associated with the intersection
+        traffic_light_settings = TrafficLightSetting.query.filter_by(intersection_id=plan.intersection_id).all() if plan.intersection_id else []
 
-        # Fetch all traffic lights for the same day if traffic_light_setting exists
-        same_day_traffic_lights = (
-            TrafficLightSetting.query.filter_by(day=traffic_light_setting.day).all()
-            if traffic_light_setting else []
-        )
-        
-        results.append(
-            {
-                "week_plan_id": plan.id,
-                "intersection_id": intersection.id,
-                "intersection_name": intersection.intersection_name if intersection else None,
-                "traffic_light_id": traffic_light_setting.id if traffic_light_setting else None,
-                "camera_id": traffic_light_setting.camera_id if traffic_light_setting else None,
+        traffic_lights_data = []
+        for light in traffic_light_settings:
+            # Fetch camera information if available
+            camera_info = Camera.query.get(light.camera_id) if light.camera_id else None
+
+            traffic_lights_data.append({
+                "traffic_light_id": light.id,
+                "day": light.day,
+                "current_timer": light.traffic_light_timer,
+                "traffic_light_name": light.traffic_light_timer,
                 "camera_info": {
-                    "camera_id": camera_info.id if camera_info else None,
-                    "camera_name": camera_info.name if camera_info else None,
-                    "camera_rtsp_url": camera_info.rtsp_url if camera_info else None,
-                    "camera_location": camera_info.location if camera_info else None,
-                    "camera_status": camera_info.status if camera_info else None,
-                } if camera_info else None,  # Include camera information if available
-                "current_timer": traffic_light_setting.traffic_light_timer if traffic_light_setting else None,
-                "day": traffic_light_setting.day if traffic_light_setting else None,
-                "created_at": plan.created_at,
-                "modified_at": plan.modified_at,
-            }
-        )
+                    "camera_id": camera_info.id,
+                    "camera_name": camera_info.name,
+                    "camera_rtsp_url": camera_info.rtsp_url,
+                    "camera_location": camera_info.location,
+                    "camera_status": camera_info.status,
+                } if camera_info else None,
+            })
+
+        results.append({
+            "week_plan_id": plan.id,
+            "intersection_id": plan.intersection_id,
+            "intersection_name": intersection_name,
+            "traffic_lights": traffic_lights_data,
+            "created_at": plan.created_at,
+            "modified_at": plan.modified_at,
+        })
+
     return jsonify(results), 200
+
 
 # GET TRAFFIC LIGHT SETTING
 @week_plan_routes.route("/get_trafficLight", methods=["GET"])
@@ -85,11 +73,19 @@ def get_traffic_light():
         results = []
         # Debugging: Print traffic light settings and their traffic_mode
         for light in traffic_lights:
+            camera_info = Camera.query.filter_by(id=light.camera_id).first()
             results.append(
                 {
                     "traffic_light_id": light.id,
                     "intersection_id": light.intersection_id,
                     "camera_id": light.camera_id,
+                    "camera_info": {
+                        "camera_id": camera_info.id,
+                        "camera_name": camera_info.name,
+                        "camera_rtsp_url": camera_info.rtsp_url,
+                        "camera_location": camera_info.location,
+                        "camera_status": camera_info.status,
+                    } if camera_info else None,  # Handle if no matching camera is found
                     "day": light.day,
                     "traffic_light_name": light.traffic_light_name,
                     "traffic_light_name_two_way": light.traffic_light_name_two_way,

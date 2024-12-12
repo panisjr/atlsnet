@@ -372,7 +372,7 @@ const ViolationRecord = () => {
                       data-bs-toggle="modal"
                       data-bs-target="#createAccountStaticBackdrop"
                     >
-                      <i class="bi bi-person-plus"></i>
+                      <i className="bi bi-person-plus"></i>
                     </button>
                     <h5>Upload new File</h5>
                     <form onSubmit={handleSubmit} encType="multipart/form-data">
@@ -418,10 +418,10 @@ const ViolationRecord = () => {
                         <th></th>
                       </tr>
                     </thead>
-                    {images && images.length > 0 ? (
-                      images.map((src, index) => (
-                        <tbody key={index}>
-                          <tr>
+                    <tbody>
+                      {images && images.length > 0 ? (
+                        images.map((src, index) => (
+                          <tr key={index}>
                             <td>
                               {" "}
                               <img
@@ -449,13 +449,17 @@ const ViolationRecord = () => {
                               ></button>
                             </td>
                           </tr>
-                        </tbody>
-                      ))
-                    ) : (
-                      <i className="d-flex align-items-center justify-content-end">
-                        No violation found...
-                      </i>
-                    )}
+                        ))
+                      ) : (
+                        <tr>
+                          <td colSpan="4" className="text-center">
+                            <i className="d-flex align-items-center justify-content-end">
+                              No violation found...
+                            </i>
+                          </td>
+                        </tr>
+                      )}
+                    </tbody>
                   </table>
                 </div>
               </div>
@@ -514,16 +518,18 @@ const ViolationRecord = () => {
                 <div className="uploadVideoContainer">
                   <table className="table table-bordered">
                     <thead>
-                      <th>No.</th>
-                      <th>In Counts</th>
-                      <th>Out Counts</th>
-                      <th>Video</th>
-                      <th></th>
+                      <tr>
+                        <th>No.</th>
+                        <th>In Counts</th>
+                        <th>Out Counts</th>
+                        <th>Video</th>
+                        <th></th>
+                      </tr>
                     </thead>
-                    {vidSrc && vidSrc.length > 0 ? (
-                      vidSrc.map((src, index) => (
-                        <tbody>
-                          <tr key={index + 1}>
+                    <tbody>
+                      {vidSrc && vidSrc.length > 0 ? (
+                        vidSrc.map((src, index) => (
+                          <tr key={index}>
                             <td>{index + 1}</td>
                             <td>{src.in_counts}</td>
                             <td>{src.out_counts}</td>
@@ -546,11 +552,15 @@ const ViolationRecord = () => {
                               ></button>
                             </td>
                           </tr>
-                        </tbody>
-                      ))
-                    ) : (
-                      <i>No video</i>
-                    )}
+                        ))
+                      ) : (
+                        <tr>
+                          <td colSpan="4" className="text-center">
+                            <i>No video</i>
+                          </td>
+                        </tr>
+                      )}
+                    </tbody>
                   </table>
                 </div>
               </div>

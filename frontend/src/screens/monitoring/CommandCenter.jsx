@@ -50,6 +50,10 @@ function CommandCenter() {
         console.log("Real-time update received:", data);
         // Example: Update camera list if needed
       });
+      
+      socket.current.on("disconnect", () => {
+        console.log("Disconnected from server");
+      });
     }
 
     // Clean up socket connection on unmount

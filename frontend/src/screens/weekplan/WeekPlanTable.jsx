@@ -5,7 +5,7 @@ const WeekPlanTable = ({
   intersection = [],
   weekPlan,
   sortedDays,
-  cameras=[],
+  cameras = [],
   handleSelectedIntersection,
   handleSelectedWeekPlan,
   setSelected,
@@ -16,9 +16,7 @@ const WeekPlanTable = ({
         weekPlan.map((road) => (
           <div className="weekPlanTable" key={road.week_plan_id}>
             <div className="d-flex align-items-center justify-content-between">
-              <p>
-                {road.intersection_name}
-              </p>
+              <p>{road.intersection_name}</p>
               <div className="d-flex align-items-center justify-content-around">
                 <h5
                   className="bi bi-plus-circle btn btn-outline-dark cursor-pointer"
@@ -56,7 +54,7 @@ const WeekPlanTable = ({
                           <tr>
                             <th>Traffic Light</th>
                             <th>Timer</th>
-                            
+
                             <th></th>
                           </tr>
                         </thead>
@@ -71,7 +69,10 @@ const WeekPlanTable = ({
                             .map((light) => (
                               <tr key={light.traffic_light_id}>
                                 <td>
-                                  {light.traffic_light_name || light.traffic_light_name_two_way || <i>No name</i>}
+                                  {light.traffic_light_name ||
+                                    light.traffic_light_name_two_way || (
+                                      <i>No name</i>
+                                    )}
                                 </td>
                                 <td>
                                   {light.traffic_light_timer ? (
@@ -170,7 +171,11 @@ const WeekPlanTable = ({
                                     <i>No Timer</i>
                                   )}
                                 </td>
-                                <td>{road.camera_info?.camera_status || <i>No Camera Status</i>}</td>
+                                <td>
+                                  {light.camera_info?.camera_status || (
+                                    <i>No Camera Status</i>
+                                  )}
+                                </td>
                                 <td>
                                   <div>
                                     <i
